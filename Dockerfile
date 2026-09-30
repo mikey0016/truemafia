@@ -4,16 +4,16 @@ FROM node:22-alpine
 
 # Install fly.io-friendly init for proper signal handling
 RUN apk add --no-cache curl
-ENV NODE_ENV=production
 
 WORKDIR /app
 
-# Install all workspace deps (incl. dev deps needed for tsx)
+# Install ALL workspace deps (dev deps needed for tsc/vite/tsx during build).
+# NOTE: NODE_ENV=production is set AFTER the build, otherwise npm skips devDependencies.
 COPY package.json package-lock.json ./
 COPY shared/package.json shared/
 COPY server/package.json server/
 COPY client/package.json client/
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy sources
 COPY tsconfig.base.json ./
@@ -23,6 +23,9 @@ COPY client client/
 
 # Build shared types + client bundle
 RUN npm run build
+
+# Production env from here on (deps are already installed with dev included)
+ENV NODE_ENV=production
 
 WORKDIR /app/server
 
