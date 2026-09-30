@@ -1,0 +1,19 @@
+# Render Blueprint — truemafia (Telegram Mafia game)
+# Deploy: Render dashboard → New → Blueprint → shu repoga ulash
+services:
+  - type: web
+    name: truemafia
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Neon Postgres connection string
+      - key: BOT_TOKEN
+        sync: false # Telegram bot token
+      - key: ADMIN_IDS
+        sync: false # vergul bilan ajratilgan admin Telegram ID'lari
