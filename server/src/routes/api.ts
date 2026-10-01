@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { SHOP_ITEMS } from '@truemafia/shared';
 import type { Db } from '../database/db.js';
 import type { UserService } from '../services/userService.js';
 import type { RoomManager } from '../game/roomManager.js';
@@ -70,6 +71,36 @@ export function createApiRouter(deps: {
       .getHistory(uid)
       .then((history) => res.json({ history }))
       .catch(() => res.status(500).json({ error: 'History unavailable' }));
+  });
+
+  // ---- market ----
+  router.get('/shop', (req, res) => {
+    const uid = req.tgUser!.userId;
+    void Promise.all([deps.users.getById(uid), deps.users.ownedItems(uid)]).then(([u, owned]) => {
+      const ownedSet = new Set(owned);
+      res.json({
+        balance: u ? Number(u.coins) || 0 : 0,
+        items: SHOP_ITEMS.map((i) => ({ ...i, owned: ownedSet.has(i.id) })),
+      });
+    });
+  });
+
+  router.post('/shop/buy', (req, res) => {
+    const uid = req.tgUser!.userId;
+    const itemId = String(req.body?.item_id ?? '');
+    const item = SHOP_ITEMS.find((i) => i.id === itemId);
+    if (!item) {
+      res.status(400).json({ error: 'Unknown item' });
+      return;
+    }
+    void deps.users.buyItem(uid, item.id, item.price).then((r) => {
+      if (!r.ok) {
+        const code = r.error === 'Already owned' ? 409 : 400;
+        res.status(code).json({ error: r.error, balance: r.balance });
+        return;
+      }
+      res.json({ ok: true, balance: r.balance });
+    });
   });
 
   // ---- admin ----

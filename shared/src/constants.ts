@@ -78,3 +78,25 @@ export function startingTeamCounts(roles: RoleId[]): {
   }
   return { mafia, town, independents };
 }
+
+/** Marketda sotiladigan premium aktiv rollar (draft'da tanlash uchun egalik shart). */
+export interface ShopItem {
+  id: string;
+  roleId: RoleId;
+  price: number;
+}
+
+export const SHOP_ITEMS: ShopItem[] = [
+  { id: 'role_bodyguard', roleId: 'BODYGUARD', price: 150 },
+  { id: 'role_jester', roleId: 'JESTER', price: 200 },
+  { id: 'role_don', roleId: 'DON', price: 300 },
+  { id: 'role_serial_killer', roleId: 'SERIAL_KILLER', price: 400 },
+];
+
+export function shopItemForRole(roleId: RoleId): ShopItem | undefined {
+  return SHOP_ITEMS.find((i) => i.roleId === roleId);
+}
+
+export function isPremiumRole(roleId: RoleId): boolean {
+  return shopItemForRole(roleId) !== undefined;
+}

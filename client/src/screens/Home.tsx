@@ -113,6 +113,7 @@ export function Home() {
         {(
           [
             ['PROFILE', 'profile', '👤'],
+            ['MARKET', 'market', '🛒'],
             ['HISTORY', 'history', '📜'],
             ['LEADERBOARD', 'leaderboard', '🏆'],
             ['ACHIEVEMENTS', 'achievements', '🎖️'],
@@ -136,7 +137,7 @@ export function Home() {
           </button>
         ))}
       </div>
-      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.1.2</div>
+      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.2.0</div>
     </div>
   );
 }

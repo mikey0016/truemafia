@@ -2,6 +2,7 @@ import type { Server as HttpServer } from 'node:http';
 import { Server as IOServer, type Socket } from 'socket.io';
 import type { ChatMessage, GameSnapshot, RoomSettings, Team } from '@truemafia/shared';
 import { ACHIEVEMENTS, CHAT_MAX_LEN, RATE_LIMITS } from '@truemafia/shared';
+import { isPremiumRole, shopItemForRole } from '@truemafia/shared';
 import {
   guestUser,
   logAuthFailure,
@@ -287,7 +288,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       emitRoomState(room);
     });
 
-    socket.on('room:pickRole', (payload, ack) => {
+    socket.on('room:pickRole', async (payload, ack) => {
       if (!requireAuth()) return;
       if (!limiter.check(`pick:${me().userId}`, RATE_LIMITS.action)) {
         ack?.({ ok: false, error: 'Slow down' });
@@ -308,6 +309,15 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       if (roleId !== null && !/^[A-Z_]+$/.test(roleId)) {
         ack?.({ ok: false, error: 'Bad role' });
         return;
+      }
+      // Premium aktiv rollar — faqat marketdan sotib olganlar tanlay oladi
+      if (roleId !== null && isPremiumRole(roleId)) {
+        const item = shopItemForRole(roleId)!;
+        const owned = await deps.users.ownsItem(me().userId, item.id);
+        if (!owned) {
+          ack?.({ ok: false, error: `Locked — buy ${item.id} in Market (${item.price} 🪙)` });
+          return;
+        }
       }
       const res = room.engine.pickRole(me().userId, roleId);
       ack?.(res.ok ? { ok: true } : { ok: false, error: res.error });

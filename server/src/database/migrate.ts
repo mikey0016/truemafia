@@ -177,6 +177,18 @@ const MIGRATIONS: { id: number; name: string; sql: string[]; tolerateFailure?: b
     tolerateFailure: true,
     sql: [`ALTER TABLE users ADD COLUMN detective_finds INTEGER NOT NULL DEFAULT 0`],
   },
+  {
+    id: 11,
+    name: 'purchases',
+    sql: [
+      `CREATE TABLE IF NOT EXISTS purchases (
+        user_id BIGINT NOT NULL,
+        item_id TEXT NOT NULL,
+        created_at BIGINT NOT NULL,
+        PRIMARY KEY (user_id, item_id)
+      )`,
+    ],
+  },
 ];
 
 export async function migrate(db: Db): Promise<void> {

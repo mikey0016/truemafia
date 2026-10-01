@@ -8,6 +8,7 @@ import type {
   RoleId,
   RoomSettings,
   LeaderboardEntry,
+  ShopItem,
 } from '@truemafia/shared';
 import type { AchievementDef } from '@truemafia/shared';
 import { ACHIEVEMENTS } from '@truemafia/shared';
@@ -42,6 +43,7 @@ export type Screen =
   | 'leaderboard'
   | 'achievements'
   | 'settings'
+  | 'market'
   | 'admin';
 
 export interface Toast {
@@ -133,6 +135,13 @@ interface GameState {
   history: GameHistoryEntry[];
   historyLoading: boolean;
   loadHistory: () => Promise<void>;
+
+  // market
+  shopBalance: number;
+  shopItems: (ShopItem & { owned: boolean })[];
+  shopLoading: boolean;
+  loadShop: () => Promise<void>;
+  buyItem: (itemId: string) => Promise<boolean>;
 
   // open rooms (find a game)
   openRooms: OpenRoom[];
@@ -304,6 +313,48 @@ export const useGameStore = create<GameState>((set, get) => ({
         openRoomsLoading: false,
         openRoomsError: e instanceof Error ? e.message : 'Network error',
       });
+    }
+  },
+
+  shopBalance: 0,
+  shopItems: [],
+  shopLoading: false,
+  loadShop: async () => {
+    set({ shopLoading: true });
+    try {
+      const res = await apiFetch('/api/shop');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as { balance: number; items: (ShopItem & { owned: boolean })[] };
+      set({ shopBalance: json.balance ?? 0, shopItems: json.items ?? [], shopLoading: false });
+    } catch {
+      set({ shopLoading: false });
+    }
+  },
+  buyItem: async (itemId) => {
+    try {
+      const res = await fetch(apiUrl('/api/shop/buy'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-telegram-init-data': getInitData(),
+          'x-guest-id': String(getGuestId()),
+          'x-guest-name': getGuestName(),
+        },
+        body: JSON.stringify({ item_id: itemId }),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string; balance?: number };
+      if (!res.ok || !json.ok) {
+        get().pushToast('error', json.error ?? 'Buy failed');
+        return false;
+      }
+      if (typeof json.balance === 'number') set({ shopBalance: json.balance });
+      get().pushToast('success', 'Purchased!');
+      void get().loadShop();
+      void get().loadProfile();
+      return true;
+    } catch {
+      get().pushToast('error', 'Network error');
+      return false;
     }
   },
 }));

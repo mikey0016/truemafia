@@ -12,6 +12,7 @@ import { History } from './screens/History';
 import { Leaderboard } from './screens/Leaderboard';
 import { Achievements } from './screens/Achievements';
 import { Settings } from './screens/Settings';
+import { Market } from './screens/Market';
 import { hideMainButton } from './services/telegram';
 
 export function App() {
@@ -53,6 +54,9 @@ export function App() {
       break;
     case 'settings':
       content = <Settings />;
+      break;
+    case 'market':
+      content = <Market />;
       break;
     default:
       content = <Home />;

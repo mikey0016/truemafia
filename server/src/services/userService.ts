@@ -232,9 +232,57 @@ export class UserService {
     for (const a of ACHIEVEMENTS) {
       await this.db.run(
         `INSERT INTO achievements (id, name, description) VALUES ($1, $2, $3)
-         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description`,
+        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description`,
         [a.id, a.name, a.description],
       );
     }
+  }
+
+  async ownsItem(userId: number, itemId: string): Promise<boolean> {
+    const row = await this.db.get<{ c: number | string }>(
+      'SELECT COUNT(*) AS c FROM purchases WHERE user_id = $1 AND item_id = $2',
+      [userId, itemId],
+    );
+    return num(row?.c) > 0;
+  }
+
+  async ownedItems(userId: number): Promise<string[]> {
+    const rows = await this.db.all<{ item_id: string }>(
+      'SELECT item_id FROM purchases WHERE user_id = $1',
+      [userId],
+    );
+    return rows.map((r) => r.item_id);
+  }
+
+  /**
+   * Marketdan sotib olish: coin yetarli + hali olinmagan bo'lsa yechib beradi.
+   * Poyga holatida (ikki marta bosish) — ikkinchi urinish Already owned qaytaradi.
+   */
+  async buyItem(
+    userId: number,
+    itemId: string,
+    price: number,
+  ): Promise<{ ok: boolean; error?: string; balance?: number }> {
+    if (await this.ownsItem(userId, itemId)) {
+      const u = await this.getById(userId);
+      return { ok: false, error: 'Already owned', balance: u ? num(u.coins) : undefined };
+    }
+    const u = await this.getById(userId);
+    if (!u) return { ok: false, error: 'User not found' };
+    if (num(u.coins) < price) return { ok: false, error: 'Not enough coins', balance: num(u.coins) };
+    await this.db.run('UPDATE users SET coins = coins - $1 WHERE user_id = $2', [price, userId]);
+    try {
+      await this.db.run(
+        'INSERT INTO purchases (user_id, item_id, created_at) VALUES ($1, $2, $3)',
+        [userId, itemId, Date.now()],
+      );
+    } catch {
+      // poyga: there — pulni qaytaramiz
+      await this.db.run('UPDATE users SET coins = coins + $1 WHERE user_id = $2', [price, userId]);
+      const cur = await this.getById(userId);
+      return { ok: false, error: 'Already owned', balance: cur ? num(cur.coins) : undefined };
+    }
+    const cur = await this.getById(userId);
+    return { ok: true, balance: cur ? num(cur.coins) : 0 };
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MIN_PLAYERS, ROLES, suggestedRolePlan, type RoleId } from '@truemafia/shared';
+import { MIN_PLAYERS, ROLES, isPremiumRole, shopItemForRole, suggestedRolePlan, type RoleId } from '@truemafia/shared';
 import { useGameStore } from '../store/gameStore';
 import { Avatar } from '../components/Avatar';
 import { getSocket } from '../services/socket';
@@ -13,6 +13,13 @@ const ROLE_ICONS: Record<string, string> = {
 
 export function Lobby() {
   const { roomCode, roomPlayers, roomSettings, rolePicks, myPick, isHost, ready, pickRole } = useGameStore();
+  const shopItems = useGameStore((s) => s.shopItems);
+  const loadShop = useGameStore((s) => s.loadShop);
+  const navigate = useGameStore((s) => s.navigate);
+
+  useEffect(() => {
+    if (roomSettings?.roleDraft) void loadShop();
+  }, [loadShop, roomSettings?.roleDraft]);
   const pushToast = useGameStore((s) => s.pushToast);
   const navigate = useGameStore((s) => s.navigate);
   const [copied, setCopied] = useState(false);
@@ -192,6 +199,20 @@ function RoleDraftCard({
   const counts = new Map<RoleId, number>();
   for (const r of pool) counts.set(r, (counts.get(r) ?? 0) + 1);
   const order = [...counts.keys()];
+  const shopItems = useGameStore((s) => s.shopItems);
+  const pushToast = useGameStore((s) => s.pushToast);
+  const navigate = useGameStore((s) => s.navigate);
+  const owned = new Set(shopItems.filter((i) => i.owned).map((i) => i.roleId));
+
+  const tap = (role: RoleId, locked: boolean) => {
+    if (locked) {
+      const item = shopItemForRole(role);
+      pushToast('info', `Marketdan sotib oling — ${item?.price ?? '?'} 🪙`);
+      navigate('market');
+      return;
+    }
+    onPick(role);
+  };
 
   return (
     <div className="card">
@@ -215,20 +236,22 @@ function RoleDraftCard({
         {order.map((role) => {
           const def = ROLES[role];
           const mine = myPick === role;
+          const locked = !mine && isPremiumRole(role) && !owned.has(role);
+          const price = shopItemForRole(role)?.price;
           return (
             <button
               key={role}
               className="list-row card-press"
               style={{ borderColor: mine ? def.color : undefined }}
-              onClick={() => onPick(mine ? null : role)}
+              onClick={() => (mine ? onPick(null) : tap(role, locked))}
             >
-              <span style={{ fontSize: '1.4rem' }}>{ROLE_ICONS[def.icon] ?? '🎭'}</span>
+              <span style={{ fontSize: '1.4rem' }}>{locked ? '🔒' : (ROLE_ICONS[def.icon] ?? '🎭')}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 800, fontSize: '0.9rem', color: def.color }}>{def.name.toUpperCase()}</div>
                 <div className="dim" style={{ fontSize: '0.75rem' }}>{def.tagline}</div>
               </div>
               <span className="badge" style={mine ? { borderColor: def.color, color: def.color } : undefined}>
-                {mine ? 'SIZNIKI' : `×${counts.get(role)}`}
+                {mine ? 'SIZNIKI' : locked ? `${price} 🪙` : `×${counts.get(role)}`}
               </span>
             </button>
           );
