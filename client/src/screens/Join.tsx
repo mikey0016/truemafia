@@ -17,8 +17,10 @@ export function Join() {
 
   const quick = () => {
     if (!getSocket().connected) {
-      hapticNotify('error');
-      pushToast('error', 'Backend ulanmagan — Settings’da server URL’ni kiriting');
+      // Render free Cold Start: ulanishni kutib, ulangach quick match davom etadi
+      haptic('medium');
+      useGameStore.getState().setPendingAction(() => quick());
+      pushToast('info', 'Server uyg‘onmoqda — ulanishi kutilmoqda…');
       return;
     }
     setBusy('quick');
@@ -48,7 +50,7 @@ export function Join() {
     }
     if (!getSocket().connected) {
       hapticNotify('error');
-      pushToast('error', 'Backend ulanmagan — Settings’da server URL’ni kiriting');
+      pushToast('error', 'Server uyg‘onmoqda — 30-60 soniya kuting va qayta bosing');
       return;
     }
     setBusy(roomCode ? `room:${c}` : 'join');

@@ -17,7 +17,7 @@ export interface GamePlayer {
   role: RoleId;
   alive: boolean;
   deathRound?: number;
-  deathCause?: 'NIGHT_KILL' | 'BODYGUARD' | 'VOTED';
+  deathCause?: 'NIGHT_KILL' | 'BODYGUARD' | 'VOTED' | 'LEFT';
   lastNightTarget?: number; // doctor/bodyguard anti-repeat guard
   investigations: { targetId: number; result: 'MAFIA' | 'NOT_MAFIA' }[];
   kills: number;

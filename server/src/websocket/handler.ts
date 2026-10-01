@@ -8,6 +8,7 @@ import {
   parseInitDataInsecure,
   validateInitDataDetailed,
 } from '../auth/telegram.js';
+import { setRoomCloseNotifier } from '../game/roomManager.js';
 import type { RoomManager } from '../game/roomManager.js';
 import { BotController } from '../game/bots.js';
 import type { GameEngine } from '../game/engine.js';
@@ -49,6 +50,11 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
   });
   const limiter = new RateLimiter();
   const bridged = new Set<string>();
+
+  // Xona yopilganda qolgan mijozlarga 'room:closed' yuborish uchun
+  setRoomCloseNotifier({
+    emitToSocket: (socketId, event, payload) => io.to(socketId).emit(event, payload as never),
+  });
 
   function bridgeEngine(engine: GameEngine): void {
     const roomCode = engine.code.toUpperCase();
@@ -251,10 +257,11 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       const code = me().roomCode;
       const room = code ? deps.roomManager.get(code) : undefined;
       if (room) {
-        room.engine.removePlayer(me().userId);
+        // LOBBY'da ro'yxatdan o'chiradi, o'yin davomida esa "o'lgan" qilib chetlatadi
+        room.engine.kickPlayer(me().userId);
         deps.roomManager.detachSocket(code!, me().userId, socket.id);
         socket.leave(`room:${code}`);
-        emitRoomState(room);
+        if (room.engine.phase === 'LOBBY') emitRoomState(room);
       }
       socket.data.roomCode = undefined;
       ack?.({ ok: true });

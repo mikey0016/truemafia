@@ -17,6 +17,16 @@ export interface JoinUser {
   photoUrl?: string;
 }
 
+/** Xona yopilganda mijozlarga xabar yuborish uchun io reference (createSocketServer tomonidan o'rnatiladi). */
+let ioNotify: { emitToSocket: (socketId: string, event: string, payload: unknown) => void } | null =
+  null;
+
+export function setRoomCloseNotifier(
+  notifier: { emitToSocket: (socketId: string, event: string, payload: unknown) => void } | null,
+): void {
+  ioNotify = notifier;
+}
+
 export class RoomManager {
   rooms = new Map<string, ManagedRoom>();
   private cleanupTimer: NodeJS.Timeout | null = null;
@@ -113,11 +123,19 @@ export class RoomManager {
     }
   }
 
-  async closeRoom(code: string): Promise<void> {
+  async closeRoom(code: string, notifyReason?: string): Promise<void> {
     const room = this.rooms.get(code.toUpperCase());
     if (!room) return;
     room.engine.dispose();
     this.rooms.delete(code.toUpperCase());
+    if (notifyReason) {
+      // xonada qolgan (socketi bor) o'yinchilarga xabar — klient bosh sahifaga qaytadi
+      for (const sockets of room.sockets.values()) {
+        for (const sid of sockets) {
+          ioNotify?.emitToSocket(sid, 'room:closed', { reason: notifyReason });
+        }
+      }
+    }
     if (room.engine.room.roomId !== null) {
       await this.db.run(`UPDATE rooms SET closed_at=$1 WHERE id=$2`, [
         Date.now(),
@@ -151,11 +169,16 @@ export class RoomManager {
       const now = Date.now();
       for (const [code, room] of this.rooms) {
         const e = room.engine;
-        const noHumans = e.players.every((p) => p.isBot);
+        const humans = e.players.filter((p) => !p.isBot);
+        const noHumans = humans.length === 0;
         const emptyLobby = e.phase === 'LOBBY' && e.players.length === 0;
+        const everyoneGone =
+          humans.length > 0 && humans.every((p) => !p.connected && !room.sockets.has(p.userId));
+        // O'yin tugagan va odam qolmasa — 2 daqiqada yopish (natija ekranini ko'rishga vaqt beradi)
+        const finishedEmpty = e.isOver && noHumans;
         const stale = now - e.startedAtTime > 3 * 3600_000;
-        if (noHumans || emptyLobby || (stale && e.isOver)) {
-          void this.closeRoom(code);
+        if (noHumans || everyoneGone || emptyLobby || finishedEmpty || (stale && e.isOver)) {
+          void this.closeRoom(code, everyoneGone || (noHumans && !emptyLobby) ? 'Room closed — everyone left' : undefined);
         }
       }
     }, 60_000);

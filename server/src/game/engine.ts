@@ -108,6 +108,37 @@ export class GameEngine {
     this.hooks.onPhaseChanged();
   }
 
+  /**
+   * O'yin davomida chiqish: o'yinchi ro'yxatdan o'chirilmaydi (o'yin buzilmasin),
+   * lekin "o'lgan" qilib belgilanadi (LEFT) — tunda harakat qilmaydi, ovoz bermaydi,
+   * win-check'da hisobga olinmaydi.
+   */
+  kickPlayer(userId: number): void {
+    const p = this.players.find((x) => x.userId === userId);
+    if (!p) return;
+    if (this.phase === 'LOBBY') {
+      this.removePlayer(userId);
+      return;
+    }
+    if (this.over) {
+      // o'yin tugagan — xavfsiz o'chirish (rematch hisobida qotib qolmasin)
+      this.players = this.players.filter((x) => x.userId !== userId);
+      this.continueVotes.delete(userId);
+      this.broadcastSnapshot();
+      return;
+    }
+    if (p.alive) {
+      p.alive = false;
+      p.deathRound = this.round;
+      p.deathCause = 'LEFT';
+      this.nightActions.delete(userId);
+      this.votes.delete(userId);
+      this.pushSystem('day', `🚪 ${p.displayName} left the game.`);
+      this.checkWin();
+      if (!this.over) this.broadcastSnapshot();
+    }
+  }
+
   setReady(userId: number, ready: boolean): void {
     if (ready) this.ready.add(userId);
     else this.ready.delete(userId);
@@ -528,13 +559,23 @@ export class GameEngine {
   requestContinue(userId: number): void {
     if (this.phase !== 'GAME_OVER') return;
     this.continueVotes.add(userId);
-    if (this.continueVotes.size >= this.players.filter((p) => !p.isBot).length) {
+    // o'yin davomida chiqib ketganlar hisobga olinmaydi
+    const eligible = this.players.filter((p) => !p.isBot && p.deathCause !== 'LEFT').length;
+    if (eligible > 0 && this.continueVotes.size >= eligible) {
       // everyone clicked play again -> reset to lobby
       this.resetToLobby();
     }
   }
 
   private resetToLobby(): void {
+    // o'yin davomida chiqib ketganlarni yangi lobby'dan ham olib tashlash
+    if (this.players.some((p) => p.deathCause === 'LEFT')) {
+      this.players = this.players.filter((p) => p.deathCause !== 'LEFT');
+      this.players.forEach((p, i) => (p.seat = i + 1));
+      if (!this.players.some((p) => p.userId === this.hostId) && this.players.length > 0) {
+        this.hostId = this.players[0].userId;
+      }
+    }
     this.over = false;
     this.winner = null;
     this.winReason = '';

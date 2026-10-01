@@ -64,6 +64,13 @@ interface GameState {
   back: () => void;
   resetTo: (s: Screen) => void;
 
+  // socket connection + pending action (backend Cold Start kutish uchun)
+  socketConnected: boolean;
+  setSocketConnected: (v: boolean) => void;
+  /** ulanib bo'lgach qayta bajariladigan amal (quick match / create room) */
+  pendingAction: (() => void) | null;
+  setPendingAction: (a: (() => void) | null) => void;
+
   // identity
   tgUserId: number | null;
   tgName: string;
@@ -143,6 +150,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       return prev ? { screen: prev, navStack: stack } : {};
     }),
   resetTo: (s) => set({ screen: s, navStack: [] }),
+
+  socketConnected: false,
+  setSocketConnected: (v) => set({ socketConnected: v }),
+  pendingAction: null,
+  setPendingAction: (a) => set({ pendingAction: a }),
+  // (pendingAction qiymati funksiya — setPendingAction bilan o'rnatiladi)
 
   tgUserId: null,
   tgName: 'Player',

@@ -68,7 +68,16 @@ export function getSocket(): AppSocket {
 
   socket.on('connect', () => {
     lastAuthOk = null;
+    import('../store/gameStore').then(({ useGameStore }) => {
+      useGameStore.getState().setSocketConnected(true);
+    });
     sendAuth();
+  });
+
+  socket.on('disconnect', () => {
+    import('../store/gameStore').then(({ useGameStore }) => {
+      useGameStore.getState().setSocketConnected(false);
+    });
   });
 
   return socket;

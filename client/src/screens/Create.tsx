@@ -38,8 +38,10 @@ export function Create() {
 
   const create = () => {
     if (!getSocket().connected) {
-      hapticNotify('error');
-      pushToast('error', 'Backend ulanmagan — Settings’da server URL’ni kiriting');
+      // Render free Cold Start ~30-60s: ulanishni kutib, ulangach avtomatik davom etamiz
+      haptic('medium');
+      useGameStore.getState().setPendingAction(() => create());
+      pushToast('info', 'Server uyg‘onmoqda — ulanishi kutilmoqda…');
       return;
     }
     setCreating(true);

@@ -52,6 +52,13 @@ export function Lobby() {
     }
   };
 
+  const leave = () => {
+    haptic('light');
+    getSocket().emit('room:leave', {}, () => {});
+    useGameStore.getState().clearRoom();
+    useGameStore.getState().resetTo('home');
+  };
+
   if (!roomCode) {
     return (
       <div className="screen">
@@ -144,6 +151,10 @@ export function Lobby() {
           {addingBots ? 'HIDE' : 'DEV: need bots?'}
         </button>
       )}
+
+      <button className="btn btn-ghost btn-block" style={{ color: '#ff6b6b' }} onClick={leave}>
+        LEAVE ROOM
+      </button>
     </div>
   );
 }

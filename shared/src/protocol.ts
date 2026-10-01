@@ -66,6 +66,8 @@ export interface ServerToClientEvents {
   'typing': (payload: { channel: string; userId: number; name: string }) => void;
   /** emitted after game results are persisted; client should reload its profile */
   'profile:updated': (payload: Record<string, never>) => void;
+  /** server closed the room (empty / cleanup) — client should return home */
+  'room:closed': (payload: { reason: string }) => void;
 }
 
 export interface ClientToServerEvents {

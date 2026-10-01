@@ -26,6 +26,14 @@ export function Game() {
   const achievementPopup = useGameStore((s) => s.achievementPopup);
   const resetTo = useGameStore((s) => s.resetTo);
 
+  const leaveGame = () => {
+    haptic('light');
+    getSocket().emit('room:leave', {}, () => {});
+    const s = useGameStore.getState();
+    s.clearRoom();
+    s.resetTo('home');
+  };
+
   if (!snapshot) {
     return (
       <div className="screen">
@@ -43,6 +51,12 @@ export function Game() {
     <div className="screen" style={{ gap: 10 }}>
       {/* HUD */}
       <Hud snapshot={snapshot} secondsLeft={secondsLeft} />
+
+      {phase !== 'GAME_OVER' && (
+        <button className="btn btn-ghost" style={{ color: '#ff6b6b', padding: '6px 14px', alignSelf: 'flex-end' }} onClick={leaveGame}>
+          LEAVE
+        </button>
+      )}
 
       {phase === 'ROLE_REVEAL' && !roleCardVisible && <RoleRevealPrompt />}
 

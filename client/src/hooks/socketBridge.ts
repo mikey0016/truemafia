@@ -104,10 +104,30 @@ export function useSocketBridge(): void {
       useGameStore.getState().pushToast('error', message);
     });
 
+    // Server xonani yopdi (hamma chiqib ketgan / cleanup) — bosh sahifaga qaytamiz
+    socket.on('room:closed', ({ reason }) => {
+      const s = useGameStore.getState();
+      s.clearRoom();
+      s.resetTo('home');
+      s.pushToast('info', reason || 'Room closed');
+    });
+
     // Telegram bo'lsa — real user, bo'lmasa — mehmon (avatar harfi ko'rinadi)
     const me = getIdentity();
     st.setIdentity(me.id ?? 0, me.name, me.photo);
   }, []);
+
+  // Socket ulanishini kutish (Render free Cold Start ~30-60s uyg'onadi) —
+  // "Backend ulanmagan" xatosi o'rniga "Ulanmoqda…" holati va ulangach avtomatik davom
+  const connected = useGameStore((s) => s.socketConnected);
+  useEffect(() => {
+    if (!connected) return;
+    const pending = useGameStore.getState().pendingAction;
+    if (pending) {
+      useGameStore.getState().setPendingAction(null);
+      pending();
+    }
+  }, [connected]);
 
   // BackButton per screen
   useEffect(() => {
