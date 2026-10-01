@@ -18,7 +18,9 @@ services:
         sync: false # Neon Postgres connection string
       - key: BOT_TOKEN
         sync: false # Telegram bot token (/start javobi + initData tekshiruvi)
+      # Mini App to'g'ridan-to'g'ri Render'dan ochiladi — index.html no-store,
+      # shuning uchun webview eskirgan versiyani cache'dan bermaydi.
       - key: WEBAPP_URL
-        value: https://mikey0016.github.io/truemafia/ # /start dagi O'ynash tugmasi
+        value: https://truemafia-gwgv.onrender.com
       - key: ADMIN_IDS
         value: '7692914031' # admin Telegram ID (ko'proq qo'shish uchun: vergul bilan)
