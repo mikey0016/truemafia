@@ -21,4 +21,4 @@ services:
       - key: WEBAPP_URL
         value: https://mikey0016.github.io/truemafia/ # /start dagi O'ynash tugmasi
       - key: ADMIN_IDS
-        sync: false # vergul bilan ajratilgan admin Telegram ID'lari
+        value: '7692914031' # admin Telegram ID (ko'proq qo'shish uchun: vergul bilan)
