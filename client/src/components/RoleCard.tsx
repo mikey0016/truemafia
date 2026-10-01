@@ -23,36 +23,36 @@ export function RoleCard({ role, onClose }: { role: RoleId; onClose: () => void 
     def.team === 'MAFIA' ? 'card-glow-mafia' : def.team === 'TOWN' ? 'card-glow-town' : 'card-glow-indep';
 
   useEffect(() => {
-    // subtle entrance handled by CSS; mark flipped=false initially
     setFlipped(false);
   }, [role]);
 
+  const flip = () => {
+    if (flipped) return;
+    setFlipped(true);
+    playSound('cardFlip');
+    haptic('medium');
+    hapticNotify('success');
+  };
+
   return (
     <div className="role-stage">
-      <div
-        className={`role-card ${flipped ? 'flipped' : ''}`}
-        onClick={() => {
-          if (!flipped) {
-            setFlipped(true);
-            playSound('cardFlip');
-            haptic('medium');
-            hapticNotify('success');
-          }
-        }}
-      >
-        {/* FRONT — face down */}
+      <div className={`role-card ${flipped ? 'flipped' : ''}`} onClick={flip}>
+        {/* FRONT — yopiq karta */}
         <div className="role-face front card-glow-unknown">
           <div className="role-shine" />
           <div className="label">YOUR ROLE</div>
-          <div style={{ fontSize: '3.6rem' }}>🌙</div>
-          <div className="role-name" style={{ fontSize: '1.3rem' }}>
-            UNKNOWN
+          <div style={{ fontSize: '3.8rem', animation: 'floaty 3.2s ease-in-out infinite' }}>🌙</div>
+          <div className="role-name" style={{ fontSize: '1.3rem', color: 'var(--text-dim)' }}>
+            ????
           </div>
-          <div className="role-tagline">TAP TO REVEAL</div>
+          <div className="role-divider" />
+          <div className="role-tagline" style={{ color: 'var(--gold)', animation: 'hintPulse 2s ease-in-out infinite' }}>
+            TAP TO REVEAL
+          </div>
         </div>
 
-        {/* BACK — the role */}
-        <div className={`role-face back ${glowClass}`} style={{ background: 'linear-gradient(165deg, #181a22, #0e1015)' }}>
+        {/* BACK — rol */}
+        <div className={`role-face back ${glowClass}`}>
           <div className="role-shine" />
           <div className="role-icon">{ICONS[def.icon] ?? '🎭'}</div>
           <div className="role-name" style={{ color: def.color }}>
@@ -61,22 +61,25 @@ export function RoleCard({ role, onClose }: { role: RoleId; onClose: () => void 
           <div className="role-tagline">{def.tagline}</div>
           <div className="role-divider" />
           <div className="role-desc">{def.description}</div>
-          <div className="role-desc" style={{ color: def.color }}>
+          <div className="role-desc" style={{ color: def.color, fontWeight: 700 }}>
             {def.ability}
           </div>
         </div>
       </div>
 
+      {/* holat ko'rsatkichi — flashcard ekanligi aniq bo'lishi uchun */}
+      {!flipped && <div className="role-hint">👆 KARTANI BOSING</div>}
+
       {flipped && (
         <button
-          className="btn btn-ghost"
-          style={{ position: 'absolute', bottom: '12%', width: 'min(70vw, 260px)' }}
+          className="btn btn-primary"
+          style={{ position: 'absolute', bottom: '6%', width: 'min(70vw, 260px)' }}
           onClick={() => {
             haptic('light');
             onClose();
           }}
         >
-          CLOSE
+          UNDERSTOOD ✓
         </button>
       )}
     </div>

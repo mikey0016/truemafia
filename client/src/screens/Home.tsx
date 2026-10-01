@@ -19,7 +19,7 @@ export function Home() {
       {/* header / identity */}
       <div
         className="card-press row"
-        style={{ gap: 14, padding: '6px 2px', cursor: 'pointer' }}
+        style={{ gap: 14, padding: '8px 4px', cursor: 'pointer' }}
         onClick={() => {
           haptic('light');
           playSound('click');
@@ -31,15 +31,15 @@ export function Home() {
           <div className="h2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {tgName}
           </div>
-          <div className="row" style={{ gap: 8, margin: '6px 0' }}>
-            <span className="badge badge-gold">LEVEL {level}</span>
+          <div className="row" style={{ gap: 8, margin: '7px 0' }}>
+            <span className="badge badge-gold">★ LEVEL {level}</span>
             <span className="badge">{profile ? `${profile.coins} 🪙` : '— 🪙'}</span>
           </div>
           <div className="xp-bar">
             <div style={{ width: `${xpPct}%` }} />
           </div>
-          <div className="label" style={{ marginTop: 4 }}>
-            {profile ? `${profile.xp}/${profile.xpToNext} XP` : 'LOADING'}
+          <div className="label" style={{ marginTop: 5 }}>
+            {profile ? `${profile.xp} / ${profile.xpToNext} XP` : 'LOADING…'}
           </div>
         </div>
       </div>
@@ -56,8 +56,9 @@ export function Home() {
           navigate('join');
         }}
       >
+        <div style={{ fontSize: '2.1rem', marginBottom: 2 }}>🎭</div>
         <div className="play-title">PLAY</div>
-        <div className="label" style={{ color: 'var(--text-dim)', marginTop: 6 }}>
+        <div className="label" style={{ color: 'var(--text-dim)', marginTop: 8, letterSpacing: '0.2em' }}>
           FIND A GAME
         </div>
       </button>
@@ -66,36 +67,38 @@ export function Home() {
       <div className="row" style={{ gap: 10 }}>
         <button
           className="btn card-press"
-          style={{ flex: 1, flexDirection: 'column', height: 76 }}
+          style={{ flex: 1, flexDirection: 'column', height: 78, gap: 4 }}
           onClick={() => {
             haptic('light');
             playSound('click');
             navigate('create');
           }}
         >
-          <span style={{ fontSize: '1.2rem' }}>＋</span> CREATE ROOM
+          <span style={{ fontSize: '1.3rem' }}>✨</span>
+          <span style={{ fontSize: '0.8rem' }}>CREATE ROOM</span>
         </button>
         <button
           className="btn card-press"
-          style={{ flex: 1, flexDirection: 'column', height: 76 }}
+          style={{ flex: 1, flexDirection: 'column', height: 78, gap: 4 }}
           onClick={() => {
             haptic('light');
             playSound('click');
             navigate('join');
           }}
         >
-          <span style={{ fontSize: '1.2rem' }}>🔗</span> JOIN ROOM
+          <span style={{ fontSize: '1.3rem' }}>🚪</span>
+          <span style={{ fontSize: '0.8rem' }}>JOIN ROOM</span>
         </button>
       </div>
 
       {/* stats */}
       <div className="stat-grid">
         <div className="stat-box">
-          <div className="v gold">{profile?.wins ?? 0}</div>
+          <div className="v gold">🏆 {profile?.wins ?? 0}</div>
           <div className="k">Wins</div>
         </div>
         <div className="stat-box">
-          <div className="v">{profile?.games ?? 0}</div>
+          <div className="v">🎮 {profile?.games ?? 0}</div>
           <div className="k">Games</div>
         </div>
         <div className="stat-box">
@@ -105,7 +108,8 @@ export function Home() {
       </div>
 
       {/* menu list */}
-      <div className="spacer" />      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="spacer" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {(
           [
             ['PROFILE', 'profile', '👤'],
@@ -125,14 +129,14 @@ export function Home() {
               navigate(target);
             }}
           >
-            <span style={{ width: 24, textAlign: 'center' }}>{icon}</span>
-            <span style={{ fontWeight: 700, fontSize: '0.92rem', letterSpacing: '0.04em' }}>{label}</span>
+            <span style={{ width: 26, textAlign: 'center', fontSize: '1.05rem' }}>{icon}</span>
+            <span style={{ fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.06em' }}>{label}</span>
             <span className="spacer" />
             <span className="dim">›</span>
           </button>
         ))}
       </div>
-      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.0.8</div>
+      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.0.9</div>
     </div>
   );
 }
