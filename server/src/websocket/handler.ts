@@ -23,6 +23,8 @@ interface SocketData {
   username: string;
   displayName: string;
   photoUrl?: string;
+  /** marketdan kiyilgan unvon (kosmetik) */
+  title?: string;
   roomCode?: string;
 }
 
@@ -119,7 +121,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
 
     socket.on(
       'auth',
-      (
+      async (
         payload: string | { initData?: string; guestId?: number; guestName?: string },
         ack?: (res: { ok: boolean; error?: string }) => void,
       ) => {
@@ -156,12 +158,52 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
           ack?.({ ok: false, error: `Noto‘g‘ri auth (${parts.join(' + ')})` });
           return;
         }
+        // Ban tekshiruvi + market unvonini yuklash
+        let title: string | undefined;
+        if (u.userId > 0) {
+          try {
+            const row = await deps.users.getById(u.userId);
+            if (row?.is_banned) {
+              ack?.({ ok: false, error: 'Hisobingiz bloklangan — admin bilan bog‘laning' });
+              return;
+            }
+            title = row?.active_title ?? undefined;
+          } catch {
+            // db xatosi bloklamasin
+          }
+        }
         socket.data.userId = u.userId;
         socket.data.username = u.username;
         socket.data.displayName = u.displayName;
         socket.data.photoUrl = u.photoUrl;
+        socket.data.title = title;
         authed = true;
         socket.join(`user:${u.userId}`);
+        // Qayta ulanish (server restart / tarmoq uzilishi): foydalanuvchi hali
+        // xonada bo'lsa — socketni qayta bog'laymiz va joriy holatni qaytaramiz
+        const existing = deps.roomManager.getByPlayer(u.userId);
+        if (existing) {
+          const code = existing.engine.code;
+          joinRoomSocket(code);
+          socket.emit('room:state', {
+            room: {
+              code: existing.engine.code,
+              phase: existing.engine.phase,
+              players: existing.engine.publicPlayers(),
+              settings: existing.engine.settings,
+              hostId: existing.engine.hostId,
+              rolePicks: existing.engine.getRolePicks(),
+            },
+            you: {
+              isHost: existing.engine.hostId === u.userId,
+              ready: (existing.engine as unknown as { ready: Set<number> }).ready.has(u.userId),
+              slot: existing.engine.getPickSlot(u.userId),
+            },
+          });
+          if (existing.engine.phase !== 'LOBBY') {
+            socket.emit('game:snapshot', existing.engine.buildSnapshotFor(u.userId));
+          }
+        }
         ack?.({ ok: true });
       },
     );
@@ -213,6 +255,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
           username: me().username,
           displayName: me().displayName,
           photoUrl: me().photoUrl,
+          title: me().title,
         },
         { ...settings, botCount: settingsBots },
         totalBots,
@@ -286,6 +329,28 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         return;
       }
       room.engine.setReady(me().userId, !!payload?.ready);
+      ack?.({ ok: true });
+      emitRoomState(room);
+    });
+
+    // Host xona sozlamasini o'zgartiradi (faqat LOBBY'da): yashirin ovoz va boshqalar
+    socket.on('room:updateSettings', (payload, ack) => {
+      if (!requireAuth()) return;
+      const room = findMyRoom();
+      if (!room) {
+        ack?.({ ok: false, error: 'Xonada emassiz' });
+        return;
+      }
+      if (room.engine.hostId !== me().userId) {
+        ack?.({ ok: false, error: 'Faqat host o‘zgartira oladi' });
+        return;
+      }
+      if (room.engine.phase !== 'LOBBY') {
+        ack?.({ ok: false, error: 'Faqat lobbyda o‘zgartiriladi' });
+        return;
+      }
+      const patch = payload?.settings ?? {};
+      room.engine.updateSettings(sanitizeSettings(patch));
       ack?.({ ok: true });
       emitRoomState(room);
     });

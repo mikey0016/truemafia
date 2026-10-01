@@ -58,6 +58,8 @@ export class GameEngine {
   private detectiveShots = new Set<number>();
   /** Ketma-ket "o'lik" raundlar (na o'lim, na ovoz, na tungi harakat) — stall himoyasi */
   private stallRounds = 0;
+  /** Qayta ovoz (runoff): teng ovoz chiqqanda faqat shu nomzodlar orasida ovoz beriladi */
+  private runoffCandidates: number[] | null = null;
 
   constructor(
     public room: RoomLike,
@@ -76,6 +78,7 @@ export class GameEngine {
     displayName: string;
     photoUrl?: string;
     isBot?: boolean;
+    title?: string;
   }): { ok: boolean; error?: string } {
     if (this.phase !== 'LOBBY') return { ok: false, error: 'O‘yin allaqachon boshlangan' };
     if (this.players.some((x) => x.userId === p.userId)) return { ok: true };
@@ -96,6 +99,7 @@ export class GameEngine {
       investigations: [],
       kills: 0,
       votesReceived: 0,
+      title: p.title,
     });
     this.hooks.onPhaseChanged();
     return { ok: true };
@@ -149,6 +153,29 @@ export class GameEngine {
   setReady(userId: number, ready: boolean): void {
     if (ready) this.ready.add(userId);
     else this.ready.delete(userId);
+  }
+
+  /**
+   * Host xona sozlamasini o'zgartirishi (faqat LOBBY'da). Ijozat berilgan
+   * maydonlar merge qilinadi — nomaqbul kalitlar e'tiborga olinmaydi.
+   */
+  updateSettings(patch: Partial<RoomSettings>): void {
+    if (this.phase !== 'LOBBY') return;
+    const allowed: (keyof RoomSettings)[] = [
+      'anonymousVoting',
+      'revealRolesOnDeath',
+      'discussionSeconds',
+      'votingSeconds',
+      'nightSeconds',
+      'privateRoom',
+    ];
+    for (const key of allowed) {
+      const v = patch[key];
+      if (v !== undefined) {
+        (this.settings as RoomSettings)[key] = v as never;
+      }
+    }
+    this.hooks.onPhaseChanged();
   }
 
   canStart(): boolean {
@@ -497,6 +524,7 @@ export class GameEngine {
     this.phase = 'VOTING';
     this.votes.clear();
     this.continueVotes.clear();
+    this.runoffCandidates = null;
     this.phaseEndsAt = Date.now() + this.settings.votingSeconds * 1000;
     this.hooks.onPhaseChanged();
     this.broadcastSnapshot();
@@ -510,6 +538,10 @@ export class GameEngine {
     if (!voter.alive) return { ok: false, error: 'O‘lganlar ovoz berolmaydi' };
     const target = this.players.find((p) => p.userId === targetId);
     if (!target || !target.alive) return { ok: false, error: 'Noto‘g‘ri nishon' };
+    // qayta ovoz rejimi: faqat runoff nomzodlariga ovoz beriladi
+    if (this.runoffCandidates && !this.runoffCandidates.includes(targetId)) {
+      return { ok: false, error: 'Qayta ovoz faqat nomzodlar orasida' };
+    }
     this.votes.set(voterId, targetId);
     this.hooks.onPhaseChanged();
     this.broadcastSnapshot();
@@ -549,6 +581,27 @@ export class GameEngine {
     let eliminatedId: number | null = null;
     if (top.length === 1 && max > 0) {
       eliminatedId = top[0];
+    } else if (top.length >= 2 && max > 0) {
+      // Teng ovoz — QAYTA OVOZ: faqat teng qolgan nomzodlar orasida yana bir marta
+      // ovoz beriladi. Qayta ovozda ham teng chiqsa — hech kim chiqarilmaydi.
+      if (!this.runoffCandidates) {
+        const names = top
+          .map((id) => this.players.find((p) => p.userId === id)?.displayName ?? '?')
+          .join(' va ');
+        this.runoffCandidates = top;
+        this.votes.clear();
+        this.continueVotes.clear();
+        this.pushSystem(
+          'day',
+          `⚖️ Ovozlar teng bo‘ldi — ${names} orasida QAYTA OVOZ e’lon qilinadi!`,
+        );
+        this.phaseEndsAt = Date.now() + this.settings.votingSeconds * 1000;
+        this.hooks.onPhaseChanged();
+        this.broadcastSnapshot();
+        this.beginPhaseTimer(this.settings.votingSeconds * 1000, () => this.resolveVote());
+        return;
+      }
+      this.pushSystem('day', '⚖️ Qayta ovozda ham tenglik — hech kim chiqarilmadi.');
     }
 
     const lines = [...tally.entries()]
@@ -598,6 +651,7 @@ export class GameEngine {
     }
 
     this.phase = 'VOTE_RESULT';
+    this.runoffCandidates = null;
     this.phaseEndsAt = Date.now() + this.resultSeconds * 1000;
     this.hooks.onPhaseChanged();
     this.broadcastSnapshot();
@@ -737,6 +791,7 @@ export class GameEngine {
     this.round = 0;
     this.nightActions.clear();
     this.votes.clear();
+    this.runoffCandidates = null;
     this.logs = { day: [], mafia: [], ghosts: [] };
     this.reveals.clear();
     this.continueVotes.clear();
@@ -788,6 +843,7 @@ export class GameEngine {
         connected: p.connected,
         isBot: p.isBot,
         role: showRole ? p.role : undefined,
+        title: p.title,
         ally: youAreMafia && targetMafia && p.userId !== you?.userId,
       };
     });
@@ -804,6 +860,10 @@ export class GameEngine {
       const key = String(targetId);
       voteCounts[key] = (voteCounts[key] ?? 0) + 1;
     }
+
+    const voteLog: GameSnapshot['voteLog'] = this.settings.anonymousVoting
+      ? []
+      : [...this.votes.entries()].map(([voterId, targetId]) => ({ voterId, targetId }));
 
     const myChannel: ChatMessage[] = [];
     if (you) {
@@ -840,6 +900,8 @@ export class GameEngine {
       canVote,
       myVote: this.votes.get(userId) ?? null,
       voteCounts: this.settings.anonymousVoting ? {} : voteCounts,
+      voteLog,
+      runoff: this.runoffCandidates,
       settings: this.settings,
       winner: this.winner,
     };
@@ -856,6 +918,7 @@ export class GameEngine {
       ready: this.ready.has(p.userId),
       connected: p.connected,
       seat: p.seat,
+      title: p.title,
     }));
   }
 

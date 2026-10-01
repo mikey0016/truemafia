@@ -189,6 +189,18 @@ const MIGRATIONS: { id: number; name: string; sql: string[]; tolerateFailure?: b
       )`,
     ],
   },
+  {
+    id: 12,
+    name: 'users_active_frame',
+    tolerateFailure: true,
+    sql: [`ALTER TABLE users ADD COLUMN active_frame TEXT`],
+  },
+  {
+    id: 13,
+    name: 'users_active_title',
+    tolerateFailure: true,
+    sql: [`ALTER TABLE users ADD COLUMN active_title TEXT`],
+  },
 ];
 
 export async function migrate(db: Db): Promise<void> {

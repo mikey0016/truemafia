@@ -79,22 +79,39 @@ export function startingTeamCounts(roles: RoleId[]): {
   return { mafia, town, independents };
 }
 
-/** Marketda sotiladigan premium aktiv rollar (draft'da tanlash uchun egalik shart). */
+/** Marketda sotiladigan buyumlar: premium rollar, avatar ramkalari, unvonlar. */
+export type ShopKind = 'role' | 'frame' | 'title';
+
 export interface ShopItem {
   id: string;
-  roleId: RoleId;
+  kind: ShopKind;
   price: number;
+  /** kind === 'role' uchun */
+  roleId?: RoleId;
+  /** kind === 'frame' | 'title' uchun: ramka kaliti yoki unvon matni */
+  value?: string;
+  name: string;
+  desc?: string;
 }
 
 export const SHOP_ITEMS: ShopItem[] = [
-  { id: 'role_bodyguard', roleId: 'BODYGUARD', price: 150 },
-  { id: 'role_jester', roleId: 'JESTER', price: 200 },
-  { id: 'role_don', roleId: 'DON', price: 300 },
-  { id: 'role_serial_killer', roleId: 'SERIAL_KILLER', price: 400 },
+  // --- premium rollar (faqat Rol tanlash rejimida tanlanadi) ---
+  { id: 'role_bodyguard', kind: 'role', roleId: 'BODYGUARD', price: 150, name: 'Tansoqchi roli', desc: 'O‘q oldida turadigan himoyachi' },
+  { id: 'role_jester', kind: 'role', roleId: 'JESTER', price: 200, name: 'Masxaraboz roli', desc: 'Ovoz bilan chiqarilsangiz yutasiz' },
+  { id: 'role_don', kind: 'role', roleId: 'DON', price: 300, name: 'Don roli', desc: 'Oilaning boshlig‘i — yakuniy qaror sizniki' },
+  { id: 'role_serial_killer', kind: 'role', roleId: 'SERIAL_KILLER', price: 400, name: 'Seriyali qotil roli', desc: 'Yolg‘iz bo‘ri — oxirgi tirik qolgan yutadi' },
+  // --- avatar ramkalari (profil va lobbida ko‘rinadi) ---
+  { id: 'frame_bronze', kind: 'frame', price: 80, value: 'bronze', name: 'Bronza ramka', desc: 'Boshlang‘ich jangchi belgisi' },
+  { id: 'frame_neon', kind: 'frame', price: 180, value: 'neon', name: 'Neon ramka', desc: 'Tunda yonib turadigan chiziq' },
+  { id: 'frame_gold', kind: 'frame', price: 350, value: 'gold', name: 'Oltin ramka', desc: 'Faqat donlar taqqan hurmat' },
+  // --- unvonlar (ism yonida ko‘rinadi) ---
+  { id: 'title_alibi', kind: 'title', price: 100, value: 'Alibiy', name: '«Alibiy» unvoni', desc: 'Hech kim ishonolmaydi, sizga ishonadi' },
+  { id: 'title_ghost', kind: 'title', price: 150, value: 'Arvoh', name: '«Arvoh» unvoni', desc: 'Nariqdan kuzatishni yaxshi ko‘rasiz' },
+  { id: 'title_baron', kind: 'title', price: 250, value: 'Baron', name: '«Baron» unvoni', desc: 'Shahar tunlari sizning jebelingizda' },
 ];
 
 export function shopItemForRole(roleId: RoleId): ShopItem | undefined {
-  return SHOP_ITEMS.find((i) => i.roleId === roleId);
+  return SHOP_ITEMS.find((i) => i.kind === 'role' && i.roleId === roleId);
 }
 
 export function isPremiumRole(roleId: RoleId): boolean {

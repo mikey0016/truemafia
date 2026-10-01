@@ -51,7 +51,7 @@ async function main(): Promise<void> {
   const rooms = new RoomManager(db);
   rooms.startCleanupLoop();
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true, time: Date.now() }));
+  app.get('/api/health', (_req, res) => res.json({ ok: true, time: Date.now(), version: 'v2.0.0' }));
 
   // Ochiq xonalar — auth'siz (Find a game ro'yxati uchun).
   // Auth talab qilinadigan router'dan OLDIN turishi shart.
@@ -74,7 +74,8 @@ async function main(): Promise<void> {
     res.json({ rooms: list });
   });
 
-  app.use('/api', authMiddleware, createApiRouter({ db, users, rooms }));
+  const ioHolder: { io?: IOServer } = {};
+  app.use('/api', authMiddleware, createApiRouter({ db, users, rooms, ioHolder }));
 
   // SPA fallback: built client'dagi barcha no-API route'lar index.html ga qaytadi
   const indexHtml = path.join(clientDist, 'index.html');
@@ -92,6 +93,7 @@ async function main(): Promise<void> {
     recorder,
     botControllers,
   });
+  ioHolder.io = io;
   void io;
 
   const port = parseInt(process.env.PORT || '3000', 10);

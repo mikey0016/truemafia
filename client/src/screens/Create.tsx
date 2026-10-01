@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MAX_PLAYERS, MIN_PLAYERS, PLAYER_COUNT_OPTIONS } from '@truemafia/shared';
 import type { RoomSettings } from '@truemafia/shared';
 import { useGameStore } from '../store/gameStore';
+import { Icon } from '../components/Icon';
 import { getSocket } from '../services/socket';
 import { haptic, hapticNotify } from '../services/telegram';
 import { playSound } from '../services/sound';
@@ -37,7 +38,6 @@ export function Create() {
 
   const create = () => {
     if (!getSocket().connected) {
-      // Render free Cold Start ~30-60s: ulanishni kutib, ulangach avtomatik davom etamiz
       haptic('medium');
       useGameStore.getState().setPendingAction(() => create());
       pushToast('info', 'Server uyg‘onmoqda — ulanishi kutilmoqda…');
@@ -46,7 +46,6 @@ export function Create() {
     setCreating(true);
     playSound('click');
     haptic('medium');
-    // timeout: server javob bermasa abadiy "CREATING…" da qotib qolmaydi
     getSocket()
       .timeout(10000)
       .emit('room:create', { settings }, (err: unknown, res?: { ok: boolean; error?: string }) => {
@@ -68,7 +67,10 @@ export function Create() {
   return (
     <div className="screen">
       <div className="row-between">
-        <div className="h1">XONA OCHISH</div>
+        <button className="btn btn-ghost" style={{ minHeight: 0, padding: '9px 13px' }} onClick={() => navigate('home')}>
+          <Icon name="back" size={16} />
+        </button>
+        <div className="h1" style={{ flex: 1, textAlign: 'center', marginRight: 52 }}>XONA OCHISH</div>
       </div>
 
       <div className="card">
@@ -113,16 +115,21 @@ export function Create() {
         <div className="label" style={{ marginBottom: 4 }}>ROLLAR</div>
         {(
           [
-            ['donEnabled', 'Don'],
-            ['doctorEnabled', 'Doktor'],
-            ['detectiveEnabled', 'Detektiv'],
-            ['bodyguardEnabled', 'Tansoqchi'],
-            ['serialKillerEnabled', 'Seriyali qotil'],
-            ['jesterEnabled', 'Masxaraboz'],
+            ['donEnabled', 'Don', 'crown'],
+            ['doctorEnabled', 'Doktor', 'plus'],
+            ['detectiveEnabled', 'Detektiv', 'search'],
+            ['bodyguardEnabled', 'Tansoqchi', 'shield'],
+            ['serialKillerEnabled', 'Seriyali qotil', 'knife'],
+            ['jesterEnabled', 'Masxaraboz', 'masks'],
           ] as const
-        ).map(([key, label]) => (
+        ).map(([key, label, icon]) => (
           <div key={key} className="toggle-row">
-            <span>{label}</span>
+            <span className="row" style={{ gap: 9, fontWeight: 600 }}>
+              <span style={{ color: 'var(--text-2)', display: 'flex' }}>
+                <Icon name={icon} size={17} />
+              </span>
+              {label}
+            </span>
             <button
               className={`toggle ${settings[key] ? 'on' : ''}`}
               onClick={() => update({ [key]: !settings[key] } as Partial<RoomSettings>)}
@@ -141,28 +148,28 @@ export function Create() {
           ] as const
         ).map(([key, label, min, max]) => (
           <div key={key} className="toggle-row">
-            <span>{label}</span>
+            <span style={{ fontWeight: 600 }}>{label}</span>
             <div className="row">
               <button className="chip" onClick={() => update({ [key]: Math.max(min, (settings[key] ?? 60) - 15) } as Partial<RoomSettings>)}>−</button>
               <span className="mono" style={{ width: 44, textAlign: 'center', fontWeight: 800 }}>{settings[key]}</span>
               <button className="chip" onClick={() => update({ [key]: Math.min(max, (settings[key] ?? 60) + 15) } as Partial<RoomSettings>)}>＋</button>
             </div>
-        </div>
+          </div>
         ))}
         <div className="toggle-row">
-          <span>Yopiq xona</span>
+          <span style={{ fontWeight: 600 }}>Yopiq xona</span>
           <button className={`toggle ${settings.privateRoom ? 'on' : ''}`} onClick={() => update({ privateRoom: !settings.privateRoom })} />
         </div>
         <div className="toggle-row">
-          <span>O‘lganda rolni ko‘rsatish</span>
+          <span style={{ fontWeight: 600 }}>O‘lganda rolni ko‘rsatish</span>
           <button className={`toggle ${settings.revealRolesOnDeath ? 'on' : ''}`} onClick={() => update({ revealRolesOnDeath: !settings.revealRolesOnDeath })} />
         </div>
         <div className="toggle-row">
-          <span>Yashirin ovoz berish</span>
+          <span style={{ fontWeight: 600 }}>Yashirin ovoz berish</span>
           <button className={`toggle ${settings.anonymousVoting ? 'on' : ''}`} onClick={() => update({ anonymousVoting: !settings.anonymousVoting })} />
         </div>
         <div className="toggle-row">
-          <span>🎴 Rol tanlash <span className="dim" style={{ fontSize: '0.72rem' }}>(kartani o‘zing tanla)</span></span>
+          <span style={{ fontWeight: 600 }}>🎴 Rol tanlash <span className="dim" style={{ fontSize: '0.72rem' }}>(kartani o‘zing tanla)</span></span>
           <button className={`toggle ${settings.roleDraft ? 'on' : ''}`} onClick={() => update({ roleDraft: !settings.roleDraft })} />
         </div>
       </div>
@@ -176,8 +183,8 @@ export function Create() {
             </button>
           ))}
         </div>
-        <div className="dim" style={{ fontSize: '0.75rem', marginTop: 8 }}>
-          Botli o'yinlar reytingga yozilmaydi (casual).
+        <div className="dim" style={{ fontSize: '0.74rem', marginTop: 8 }}>
+          Botli o‘yinlar reytingga yozilmaydi (casual).
         </div>
       </div>
 

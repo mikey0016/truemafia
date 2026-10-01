@@ -44,7 +44,7 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     tagline: 'MAFIYANI TOPING',
     description: 'Shaharning halol fuqarosi.',
     ability: 'Muhokama qiling va ovoz berib Mafiyani chiqarib yuboring.',
-    color: '#8ea0b5',
+    color: '#94a3b8',
     nightAction: false,
   },
   MAFIA: {
@@ -53,9 +53,9 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     team: 'MAFIA',
     icon: 'skull',
     tagline: 'SHAHARNI YO‘Q QILING',
-    description: 'Jinoiy olam a’zosi.',
+    description: 'Jinoiy olam a‘zosi.',
     ability: 'Har tun bir o‘yinchini o‘ldirish uchun tanlang.',
-    color: '#e5484d',
+    color: '#ef4444',
     nightAction: true,
     actionKind: 'kill',
   },
@@ -67,7 +67,7 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     tagline: 'OILANI BOSHQARING',
     description: 'Mafiya oilasining boshlig‘i.',
     ability: 'Mafiyani boshqaradi va har tun yakuniy o‘ldirish qarorini beradi.',
-    color: '#f5a524',
+    color: '#f59e0b',
     nightAction: true,
     actionKind: 'kill',
   },
@@ -79,7 +79,7 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     tagline: 'ULARNI OMON SAQLANG',
     description: 'Qo‘li yengil jarroh.',
     ability: 'Har tun bir o‘yinchini o‘limdan himoya qiling.',
-    color: '#46a758',
+    color: '#22c55e',
     nightAction: true,
     actionKind: 'protect',
   },
@@ -91,7 +91,7 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     tagline: 'HAQIQATNI BILING',
     description: 'Ziyrak tergovchi.',
     ability: 'Har tun bir o‘yinchini tekshiring: MAFIYA yoki MAFIYA EMAS. Bitta o‘qingiz bor — ishonchingiz komil bo‘lsa otib o‘ldirishingiz mumkin.',
-    color: '#0091ff',
+    color: '#38bdf8',
     nightAction: true,
     actionKind: 'investigate',
   },
@@ -104,7 +104,7 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     description: 'O‘qqa ko‘krak tutadigan sodiq himoyachi.',
     ability:
       'Har tun bir o‘yinchini qo‘riqlang. Unga hujum qilinsa, Tansoqchi o‘rniga o‘ladi.',
-    color: '#b083f0',
+    color: '#a78bfa',
     nightAction: true,
     actionKind: 'save',
   },
@@ -113,10 +113,10 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     name: 'Seriyali qotil',
     team: 'INDEPENDENT',
     icon: 'knife',
-    tagline: 'SO‘NGI NA FAS QOLGUNCHA',
+    tagline: 'SO‘NGGI NA FAS QOLGUNCHA',
     description: 'Shaxsiy rejali yolg‘iz jinoyatchi.',
     ability: 'Har tun bir o‘yinchini o‘ldiring. Oxirgi tirik qolgan sifatida yolg‘iz yutasiz.',
-    color: '#ff6b35',
+    color: '#a3e635',
     nightAction: true,
     actionKind: 'kill',
   },
@@ -149,11 +149,11 @@ export interface RoomSettings {
   privateRoom: boolean;
   revealRolesOnDeath: boolean;
   anonymousVoting: boolean;
-  /** Botlar soni (0 = yo'q). O'yin boshlanishida lobby'ga qo'shiladi. */
+  /** Botlar soni (0 = yo‘q). O‘yin boshlanishida lobby‘ga qo‘shiladi. */
   botCount: number;
   /**
-   * Karta tanlash rejimi: random o'rniga har kim lobby'da o'z kartasini tanlaydi
-   * (bo'sh kartalar startda random to'ldiriladi).
+   * Karta tanlash rejimi: random o‘rniga har kim lobby‘da o‘z kartasini tanlaydi
+   * (bo‘sh kartalar startda random to‘ldiriladi).
    */
   roleDraft: boolean;
 }
@@ -168,6 +168,8 @@ export interface PublicPlayer {
   ready: boolean;
   connected: boolean;
   seat: number;
+  /** marketdan kiyilgan unvon (kosmetik) */
+  title?: string;
 }
 
 export interface PlayerCardView {
@@ -181,6 +183,8 @@ export interface PlayerCardView {
   isBot: boolean;
   /** your own role, or revealed roles (on death when setting enabled) */
   role?: RoleId;
+  /** marketdan kiyilgan unvon (kosmetik) */
+  title?: string;
   /** true when you and target share a night chat channel (mafia) */
   ally?: boolean;
 }
@@ -221,6 +225,10 @@ export interface GameSnapshot {
   canVote: boolean;
   myVote?: number | null;
   voteCounts?: Record<string, number>;
+  /** kim kimga ovoz bergan (yashirin ovoz rejimida bo‘sh) */
+  voteLog?: { voterId: number; targetId: number }[];
+  /** qayta ovoz (runoff): faqat shu nomzodlar orasida ovoz beriladi */
+  runoff?: number[] | null;
   settings: RoomSettings;
   winner: Team | null;
 }
@@ -243,6 +251,12 @@ export interface ProfileStats {
   reputation: number;
   coins: number;
   achievements: { id: string; unlockedAt: number }[];
+  /** marketdan kiyilgan avatar ramkasi (frame_bronze|frame_neon|frame_gold) */
+  frame?: string;
+  /** marketdan kiyilgan unvon matni */
+  title?: string;
+  /** shu foydalanuvchi adminmi (ADMIN_IDS) */
+  isAdmin?: boolean;
 }
 
 export interface LeaderboardEntry {

@@ -31,6 +31,26 @@ async function apiFetch(url: string): Promise<Response> {
   });
 }
 
+async function apiPost(url: string, body: unknown): Promise<{ ok: boolean; status: number; json: Record<string, unknown> }> {
+  const res = await fetch(apiUrl(url), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-telegram-init-data': getInitData(),
+      'x-guest-id': String(getGuestId()),
+      'x-guest-name': getGuestName(),
+    },
+    body: JSON.stringify(body),
+  });
+  let json: Record<string, unknown> = {};
+  try {
+    json = (await res.json()) as Record<string, unknown>;
+  } catch {
+    // empty body
+  }
+  return { ok: res.ok, status: res.status, json };
+}
+
 export type Screen =
   | 'home'
   | 'create'
@@ -110,8 +130,10 @@ interface GameState {
   setSnapshot: (s: GameSnapshot) => void;
   roleCardVisible: boolean;
   roleCardFlipped: boolean;
+  dismissedRoleRound: number | null;
   showRoleCard: () => void;
-  dismissRoleCard: () => void;
+  /** round — qaysi raund kartasi yopilgani (ROLE_REVEAL auto-show mantiqi uchun) */
+  dismissRoleCard: (round?: number) => void;
 
   // chat
   chatMessages: ChatMessage[];
@@ -143,6 +165,41 @@ interface GameState {
   shopLoading: boolean;
   loadShop: () => Promise<void>;
   buyItem: (itemId: string) => Promise<boolean>;
+  equipItem: (itemId: string) => Promise<boolean>;
+  unequipItem: (kind: 'frame' | 'title') => Promise<boolean>;
+
+  // host: xona sozlamasini o'zgartirish (lobbyda)
+  updateRoomSettings: (patch: Partial<RoomSettings>) => void;
+
+  // admin panel
+  adminStats: {
+    onlinePlayers: number;
+    activeGames: number;
+    openRooms: number;
+    totalUsers: number;
+    totalGames: number;
+  } | null;
+  adminRooms: { code: string; phase: string; round: number; players: number; demo: boolean }[];
+  adminUsers: {
+    userId: number;
+    username: string;
+    displayName: string;
+    level: number;
+    coins: number;
+    games: number;
+    wins: number;
+    reputation: number;
+    isBanned: boolean;
+    lastSeenAt: number;
+  }[];
+  adminLoading: boolean;
+  loadAdminStats: () => Promise<void>;
+  loadAdminRooms: () => Promise<void>;
+  loadAdminUsers: (q: string) => Promise<void>;
+  adminCloseRoom: (code: string) => Promise<boolean>;
+  adminSetBan: (userId: number, banned: boolean) => Promise<boolean>;
+  adminAddCoins: (userId: number, amount: number) => Promise<boolean>;
+  adminBroadcast: (text: string) => Promise<boolean>;
 
   // open rooms (find a game)
   openRooms: OpenRoom[];
@@ -215,6 +272,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           reputation: 0,
           coins: 0,
           achievements: [],
+          isAdmin: false,
         },
       });
       void e;
@@ -229,7 +287,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   isHost: false,
   ready: false,
   setRoomState: ({ room, you }) =>
-    set({
+    set((st) => ({
       roomCode: room.code,
       roomPlayers: room.players,
       roomSettings: room.settings,
@@ -237,9 +295,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       mySlot: you.slot ?? null,
       isHost: you.isHost,
       ready: you.ready,
-    }),
+      // boshqa xonaga o'tganda eski chat aralashmasin
+      chatMessages: st.roomCode && st.roomCode !== room.code ? [] : st.chatMessages,
+    })),
   clearRoom: () =>
-    set({ roomCode: null, roomPlayers: [], roomSettings: null, rolePicks: [], mySlot: null, isHost: false, ready: false, snapshot: null }),
+    set({ roomCode: null, roomPlayers: [], roomSettings: null, rolePicks: [], mySlot: null, isHost: false, ready: false, snapshot: null, chatMessages: [], dismissedRoleRound: null }),
   pickRole: (slot) => {
     import('../services/socket').then(({ getSocket }) => {
       getSocket().emit('room:pickRole', { slot }, (res) => {
@@ -252,8 +312,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   setSnapshot: (s) => set({ snapshot: s }),
   roleCardVisible: false,
   roleCardFlipped: false,
+  /** nechinchi raund kartasi yopilgan (ROLE_REVEAL da qayta ochilmasligi uchun) */
+  dismissedRoleRound: null as number | null,
   showRoleCard: () => set({ roleCardVisible: true, roleCardFlipped: false }),
-  dismissRoleCard: () => set({ roleCardVisible: false }),
+  dismissRoleCard: (round?: number) =>
+    set({ roleCardVisible: false, dismissedRoleRound: round ?? null }),
 
   chatMessages: [],
   pushChat: (m) => set((st) => ({ chatMessages: [...st.chatMessages.slice(-150), m] })),
@@ -332,30 +395,108 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
   buyItem: async (itemId) => {
-    try {
-      const res = await fetch(apiUrl('/api/shop/buy'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-telegram-init-data': getInitData(),
-          'x-guest-id': String(getGuestId()),
-          'x-guest-name': getGuestName(),
-        },
-        body: JSON.stringify({ item_id: itemId }),
-      });
-      const json = (await res.json()) as { ok?: boolean; error?: string; balance?: number };
-      if (!res.ok || !json.ok) {
-        get().pushToast('error', json.error ?? 'Olinmadi');
-        return false;
-      }
-      if (typeof json.balance === 'number') set({ shopBalance: json.balance });
-      get().pushToast('success', 'Sotib olindi!');
-      void get().loadShop();
-      void get().loadProfile();
-      return true;
-    } catch {
-      get().pushToast('error', 'Tarmoq xatosi');
+    const { ok, json } = await apiPost('/api/shop/buy', { item_id: itemId });
+    if (!ok) {
+      get().pushToast('error', (json.error as string) ?? 'Olinmadi');
       return false;
     }
+    if (typeof json.balance === 'number') set({ shopBalance: json.balance });
+    get().pushToast('success', 'Sotib olindi!');
+    void get().loadShop();
+    void get().loadProfile();
+    return true;
+  },
+  equipItem: async (itemId) => {
+    const { ok, json } = await apiPost('/api/shop/equip', { item_id: itemId });
+    if (!ok) {
+      get().pushToast('error', (json.error as string) ?? 'Kiyib bo‘lmadi');
+      return false;
+    }
+    get().pushToast('success', 'Kiyildi!');
+    void get().loadProfile();
+    return true;
+  },
+  unequipItem: async (kind) => {
+    const { ok } = await apiPost('/api/shop/unequip', { kind });
+    if (!ok) return false;
+    void get().loadProfile();
+    return true;
+  },
+
+  updateRoomSettings: (patch) => {
+    import('../services/socket').then(({ getSocket }) => {
+      getSocket().emit('room:updateSettings', { settings: patch }, (res) => {
+        if (!res.ok) get().pushToast('error', res.error ?? 'O‘zgartirilmadi');
+      });
+    });
+  },
+
+  adminStats: null,
+  adminRooms: [],
+  adminUsers: [],
+  adminLoading: false,
+  loadAdminStats: async () => {
+    set({ adminLoading: true });
+    try {
+      const res = await apiFetch('/api/admin/stats');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as NonNullable<GameState['adminStats']>;
+      set({ adminStats: json, adminLoading: false });
+    } catch {
+      set({ adminLoading: false });
+    }
+  },
+  loadAdminRooms: async () => {
+    set({ adminLoading: true });
+    try {
+      const res = await apiFetch('/api/admin/rooms');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as { rooms: GameState['adminRooms'] };
+      set({ adminRooms: json.rooms ?? [], adminLoading: false });
+    } catch {
+      set({ adminLoading: false });
+    }
+  },
+  loadAdminUsers: async (q) => {
+    set({ adminLoading: true });
+    try {
+      const res = await apiFetch(`/api/admin/users?q=${encodeURIComponent(q)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as { users: GameState['adminUsers'] };
+      set({ adminUsers: json.users ?? [], adminLoading: false });
+    } catch {
+      set({ adminLoading: false });
+    }
+  },
+  adminCloseRoom: async (code) => {
+    const { ok, json } = await apiPost(`/api/admin/rooms/${code}/close`, {});
+    if (!ok) get().pushToast('error', (json.error as string) ?? 'Yopilmadi');
+    else void get().loadAdminRooms();
+    return ok;
+  },
+  adminSetBan: async (userId, banned) => {
+    const { ok, json } = await apiPost(`/api/admin/${banned ? 'ban' : 'unban'}/${userId}`, {});
+    if (!ok) get().pushToast('error', (json.error as string) ?? 'Bajarilmadi');
+    else void get().loadAdminUsers('');
+    return ok;
+  },
+  adminAddCoins: async (userId, amount) => {
+    const { ok, json } = await apiPost(`/api/admin/coins/${userId}`, { amount });
+    if (!ok) {
+      get().pushToast('error', (json.error as string) ?? 'Bajarilmadi');
+      return false;
+    }
+    get().pushToast('success', `Coin o‘zgardi: ${json.balance ?? '?'}`);
+    void get().loadAdminUsers('');
+    return true;
+  },
+  adminBroadcast: async (text) => {
+    const { ok, json } = await apiPost('/api/admin/broadcast', { text });
+    if (!ok) {
+      get().pushToast('error', (json.error as string) ?? 'Yuborilmadi');
+      return false;
+    }
+    get().pushToast('success', 'E’lon yuborildi!');
+    return true;
   },
 }));

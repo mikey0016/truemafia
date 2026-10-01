@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Avatar } from '../components/Avatar';
+import { Icon } from '../components/Icon';
 import { haptic } from '../services/telegram';
 import { playSound, unlockAudio } from '../services/sound';
 
@@ -26,10 +27,13 @@ export function Home() {
           navigate('profile');
         }}
       >
-        <Avatar src={profile?.photoUrl ?? tgPhoto} name={tgName} size="lg" />
+        <Avatar src={profile?.photoUrl ?? tgPhoto} name={tgName} size="lg" frame={profile?.frame} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="h2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div className="h2 row" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', gap: 8 }}>
             {tgName}
+            {profile?.title && (
+              <span className="badge badge-gold" style={{ fontSize: '0.56rem' }}>«{profile.title}»</span>
+            )}
           </div>
           <div className="row" style={{ gap: 8, margin: '7px 0' }}>
             <span className="badge badge-gold">★ DARAJA {level}</span>
@@ -38,7 +42,7 @@ export function Home() {
           <div className="xp-bar">
             <div style={{ width: `${xpPct}%` }} />
           </div>
-          <div className="label" style={{ marginTop: 5 }}>
+          <div className="label" style={{ marginTop: 6 }}>
             {profile ? `${profile.xp} / ${profile.xpToNext} XP` : 'YUKLANMOQDA…'}
           </div>
         </div>
@@ -56,9 +60,12 @@ export function Home() {
           navigate('join');
         }}
       >
-        <div style={{ fontSize: '2.1rem', marginBottom: 2 }}>🎭</div>
+        <div className="play-wordmark">NIGHTFALL</div>
+        <div style={{ marginBottom: 4, color: 'var(--gold)' }}>
+          <Icon name="masks" size={40} />
+        </div>
         <div className="play-title">O‘YNASH</div>
-        <div className="label" style={{ color: 'var(--text-dim)', marginTop: 8, letterSpacing: '0.2em' }}>
+        <div className="label" style={{ color: 'var(--text-2)', marginTop: 10, letterSpacing: '0.24em' }}>
           O‘YIN TOPISH
         </div>
       </button>
@@ -67,38 +74,38 @@ export function Home() {
       <div className="row" style={{ gap: 10 }}>
         <button
           className="btn card-press"
-          style={{ flex: 1, flexDirection: 'column', height: 78, gap: 4 }}
+          style={{ flex: 1, flexDirection: 'column', height: 76, gap: 5 }}
           onClick={() => {
             haptic('light');
             playSound('click');
             navigate('create');
           }}
         >
-          <span style={{ fontSize: '1.3rem' }}>✨</span>
-          <span style={{ fontSize: '0.8rem' }}>XONA OCHISH</span>
+          <Icon name="spark" size={22} />
+          <span style={{ fontSize: '0.74rem' }}>XONA OCHISH</span>
         </button>
         <button
           className="btn card-press"
-          style={{ flex: 1, flexDirection: 'column', height: 78, gap: 4 }}
+          style={{ flex: 1, flexDirection: 'column', height: 76, gap: 5 }}
           onClick={() => {
             haptic('light');
             playSound('click');
             navigate('join');
           }}
         >
-          <span style={{ fontSize: '1.3rem' }}>🚪</span>
-          <span style={{ fontSize: '0.8rem' }}>XONAGA KIRISH</span>
+          <Icon name="door" size={22} />
+          <span style={{ fontSize: '0.74rem' }}>XONAGA KIRISH</span>
         </button>
       </div>
 
       {/* stats */}
       <div className="stat-grid">
         <div className="stat-box">
-          <div className="v gold">🏆 {profile?.wins ?? 0}</div>
+          <div className="v gold">{profile?.wins ?? 0}</div>
           <div className="k">G‘alaba</div>
         </div>
         <div className="stat-box">
-          <div className="v">🎮 {profile?.games ?? 0}</div>
+          <div className="v">{profile?.games ?? 0}</div>
           <div className="k">O‘yin</div>
         </div>
         <div className="stat-box">
@@ -112,12 +119,13 @@ export function Home() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {(
           [
-            ['PROFIL', 'profile', '👤'],
-            ['MARKET', 'market', '🛒'],
-            ['TARIX', 'history', '📜'],
-            ['REYTING', 'leaderboard', '🏆'],
-            ['YUTUQLAR', 'achievements', '🎖️'],
-            ['SOZLAMALAR', 'settings', '⚙️'],
+            ['PROFIL', 'profile', 'user'],
+            ['MARKET', 'market', 'cart'],
+            ['TARIX', 'history', 'scroll'],
+            ['REYTING', 'leaderboard', 'trophy'],
+            ['YUTUQLAR', 'achievements', 'medal'],
+            ['SOZLAMALAR', 'settings', 'gear'],
+            ...(profile?.isAdmin ? ([['ADMIN PANEL', 'admin', 'gear']] as const) : []),
           ] as const
         ).map(([label, target, icon]) => (
           <button
@@ -130,14 +138,16 @@ export function Home() {
               navigate(target);
             }}
           >
-            <span style={{ width: 26, textAlign: 'center', fontSize: '1.05rem' }}>{icon}</span>
-            <span style={{ fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.06em' }}>{label}</span>
+            <span style={{ width: 28, display: 'flex', justifyContent: 'center', color: 'var(--text-2)' }}>
+              <Icon name={icon} size={19} />
+            </span>
+            <span style={{ fontWeight: 700, fontSize: '0.88rem', letterSpacing: '0.08em' }}>{label}</span>
             <span className="spacer" />
-            <span className="dim">›</span>
+            <span className="faint">›</span>
           </button>
         ))}
       </div>
-      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.4.0</div>
+      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v2.0.0 · NOIR</div>
     </div>
   );
 }

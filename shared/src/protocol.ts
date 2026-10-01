@@ -82,6 +82,11 @@ export interface ClientToServerEvents {
   'room:ready': (payload: { ready: boolean }, ack: (res: AckResult) => void) => void;
   /** karta tanlash rejimi (blind): yopiq pozitsiyani olish / bo'shatish (null) */
   'room:pickRole': (payload: { slot: number | null }, ack: (res: AckResult) => void) => void;
+  /** host xona sozlamasini o'zgartiradi (faqat LOBBY'da) */
+  'room:updateSettings': (
+    payload: { settings: Partial<RoomSettings> },
+    ack: (res: AckResult) => void,
+  ) => void;
   'room:start': (payload: { addBots?: number }, ack: (res: AckResult) => void) => void;
   'game:action': (payload: ActionPayload, ack: (res: AckResult) => void) => void;
   'game:vote': (payload: VotePayload, ack: (res: AckResult) => void) => void;

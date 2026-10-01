@@ -29,6 +29,10 @@ export function useSocketBridge(): void {
       const s = useGameStore.getState();
       if (s.screen === 'home' || s.screen === 'create' || s.screen === 'join') {
         s.navigate('lobby');
+      } else if (s.screen === 'game' && payload.room.phase === 'LOBBY') {
+        // "Yana o'ynash" — xona lobby'ga qaytdi, eski o'yin chatini tozalaymiz
+        s.clearChat();
+        s.resetTo('lobby');
       }
     });
 
@@ -41,6 +45,8 @@ export function useSocketBridge(): void {
         s.resetTo('game');
       }
       if (snap.phase.phase === 'ROLE_REVEAL' && wasPhase !== 'ROLE_REVEAL') {
+        // yangi o'yin boshlandi — kartani ochiq va avtomatik ko'rsatishni tiklaymiz
+        useGameStore.setState({ dismissedRoleRound: null });
         s.showRoleCard();
         playSound('cardFlip');
         vibrate(30);

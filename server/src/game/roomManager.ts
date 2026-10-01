@@ -15,6 +15,8 @@ export interface JoinUser {
   username: string;
   displayName: string;
   photoUrl?: string;
+  /** marketdan kiyilgan unvon (kosmetik) */
+  title?: string;
 }
 
 /** Xona yopilganda mijozlarga xabar yuborish uchun io reference (createSocketServer tomonidan o'rnatiladi). */

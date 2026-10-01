@@ -2,6 +2,14 @@
 
 Telegram Mini App orqali o'ynaladigan ko'p o'yinchili «Mafiya» o'yini. Real vaqt rejimida ovoz berish, tungi harakatlar, botlar va to'liq statistika bilan.
 
+## Dizayn v2.0 «Noir Cinematic»
+
+- **Shriftlar**: Cinzel (sarlavha/serif) + Manrope (UI)
+- **Jonli osmon**: tun/kun fazasiga qarab almashinadigan fon — yulduzlar, oy/quyosh, shahar silueti
+- **SVG ikonlar tizimi**: barcha rollar va fazalar uchun yagona line-art ikonlar
+- **3D rol kartalari**: jamoa rangida nurash, ornamental ramka, flip animatsiyasi
+- **Doiraviy taymer** (SVG ring), jonli ovoz berish progress-barlari, detektiv daftari
+
 ## Texnologiyalar
 
 | Qatlam | Texnologiya |

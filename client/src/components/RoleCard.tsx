@@ -3,18 +3,7 @@ import type { RoleId } from '@truemafia/shared';
 import { ROLES } from '@truemafia/shared';
 import { haptic, hapticNotify } from '../services/telegram';
 import { playSound } from '../services/sound';
-
-const ICONS: Record<string, string> = {
-  user: '🧑',
-  skull: '💀',
-  crown: '👑',
-  plus: '⚕️',
-  search: '🔍',
-  shield: '🛡️',
-  knife: '🔪',
-  masks: '🎭',
-  drop: '🩸',
-};
+import { Icon } from './Icon';
 
 export function RoleCard({ role, onClose }: { role: RoleId; onClose: () => void }) {
   const [flipped, setFlipped] = useState(false);
@@ -40,9 +29,12 @@ export function RoleCard({ role, onClose }: { role: RoleId; onClose: () => void 
         {/* FRONT — yopiq karta */}
         <div className="role-face front card-glow-unknown">
           <div className="role-shine" />
+          <div className="role-frame" />
           <div className="label">SIZNING ROLINGIZ</div>
-          <div style={{ fontSize: '3.8rem', animation: 'floaty 3.2s ease-in-out infinite' }}>🌙</div>
-          <div className="role-name" style={{ fontSize: '1.3rem', color: 'var(--text-dim)' }}>
+          <div className="role-icon-wrap" style={{ color: 'var(--gold)' }}>
+            <Icon name="moon" size={44} />
+          </div>
+          <div className="role-name" style={{ fontSize: '1.45rem', color: 'var(--text-3)' }}>
             ????
           </div>
           <div className="role-divider" />
@@ -54,32 +46,36 @@ export function RoleCard({ role, onClose }: { role: RoleId; onClose: () => void 
         {/* BACK — rol */}
         <div className={`role-face back ${glowClass}`}>
           <div className="role-shine" />
-          <div className="role-icon">{ICONS[def.icon] ?? '🎭'}</div>
+          <div className="role-frame" />
+          <div className="role-team" style={{ color: def.color }}>
+            {def.team === 'MAFIA' ? 'MAFIYA' : def.team === 'TOWN' ? 'SHAHAR' : 'MUSTAQIL'}
+          </div>
+          <div className="role-icon-wrap" style={{ color: def.color }}>
+            <Icon name={def.icon} size={46} />
+          </div>
           <div className="role-name" style={{ color: def.color }}>
             {def.name.toUpperCase()}
           </div>
           <div className="role-tagline">{def.tagline}</div>
           <div className="role-divider" />
-          <div className="role-desc">{def.description}</div>
           <div className="role-desc" style={{ color: def.color, fontWeight: 700 }}>
             {def.ability}
           </div>
         </div>
       </div>
 
-      {/* holat ko'rsatkichi — flashcard ekanligi aniq bo'lishi uchun */}
       {!flipped && <div className="role-hint">👆 KARTANI BOSING</div>}
 
       {flipped && (
         <button
           className="btn btn-primary"
-          style={{ position: 'absolute', bottom: '6%', width: 'min(70vw, 260px)' }}
+          style={{ position: 'absolute', bottom: '4%', width: 'min(70vw, 260px)' }}
           onClick={() => {
             haptic('light');
             onClose();
           }}
         >
-          TUSHUNDIM ✓
+          TAYYOR ✓
         </button>
       )}
     </div>

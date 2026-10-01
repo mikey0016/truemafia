@@ -26,10 +26,13 @@ export function Profile() {
   return (
     <div className="screen">
       <div className="row" style={{ gap: 14 }}>
-        <Avatar src={profile.photoUrl ?? tgPhoto} name={profile.username} size="lg" />
+        <Avatar src={profile.photoUrl ?? tgPhoto} name={profile.username} size="lg" frame={profile.frame} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="h2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div className="h2 row" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', gap: 8 }}>
             {profile.username}
+            {profile.title && (
+              <span className="badge badge-gold" style={{ fontSize: '0.56rem' }}>«{profile.title}»</span>
+            )}
           </div>
           <div className="row" style={{ gap: 8, margin: '8px 0' }}>
             <span className="badge badge-gold">DARAJA {profile.level}</span>

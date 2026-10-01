@@ -23,6 +23,8 @@ export interface GamePlayer {
   kills: number;
   votesReceived: number;
   connected: boolean;
+  /** marketdan kiyilgan unvon (kosmetik) */
+  title?: string;
 }
 
 export interface NightAction {

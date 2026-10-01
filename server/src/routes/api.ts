@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
+import type { Server as IOServer } from 'socket.io';
 import { SHOP_ITEMS } from '@truemafia/shared';
 import type { Db } from '../database/db.js';
 import type { UserService } from '../services/userService.js';
@@ -6,13 +7,19 @@ import type { RoomManager } from '../game/roomManager.js';
 import { adminMiddleware } from '../middleware/auth.js';
 import { RateLimiter } from '../middleware/rateLimit.js';
 
-export function createApiRouter(deps: {
+/** io keyin yaratiladi (index.ts) — holder orqali ulanadi. */
+export interface ApiDeps {
   db: Db;
   users: UserService;
   rooms: RoomManager;
-}): Router {
+  ioHolder: { io?: IOServer };
+}
+
+export function createApiRouter(deps: ApiDeps): Router {
   const router = Router();
   const limiter = new RateLimiter();
+
+  const ok = (res: Response, data: Record<string, unknown>) => res.json({ ok: true, ...data });
 
   router.get('/health', (_req, res) => {
     res.json({ ok: true, time: Date.now() });
@@ -103,6 +110,25 @@ export function createApiRouter(deps: {
     });
   });
 
+  // ramka/unvonni kiyish yoki yechish
+  router.post('/shop/equip', (req, res) => {
+    const uid = req.tgUser!.userId;
+    const itemId = String(req.body?.item_id ?? '');
+    void deps.users.equipItem(uid, itemId).then((r) => {
+      if (!r.ok) {
+        res.status(400).json({ error: r.error });
+        return;
+      }
+      ok(res, { frame: r.frame, title: r.title });
+    });
+  });
+
+  router.post('/shop/unequip', (req, res) => {
+    const uid = req.tgUser!.userId;
+    const kind = req.body?.kind === 'title' ? 'title' : 'frame';
+    void deps.users.unequipItem(uid, kind).then(() => ok(res, {}));
+  });
+
   // ---- admin ----
   router.get('/admin/stats', adminMiddleware, (_req, res) => {
     const online = [...deps.rooms.rooms.values()].reduce(
@@ -157,6 +183,71 @@ export function createApiRouter(deps: {
     void deps.db.run('UPDATE users SET is_banned=0 WHERE user_id=$1', [uid]).then(() => {
       res.json({ ok: true });
     });
+  });
+
+  // ---- admin: kengaytirilgan ----
+
+  // barcha ulangan klientlarga e'lon (toast)
+  router.post('/admin/broadcast', adminMiddleware, (req, res) => {
+    const text = String(req.body?.text ?? '').trim().slice(0, 240);
+    if (!text) {
+      res.status(400).json({ error: 'Matn kiriting' });
+      return;
+    }
+    const io = deps.ioHolder.io;
+    if (io) {
+      io.emit('game:toast', { kind: 'info', message: `📢 ${text}` });
+    }
+    ok(res, { delivered: !!io });
+  });
+
+  // foydalanuvchilarni qidirish (id yoki ism)
+  router.get('/admin/users', adminMiddleware, (req, res) => {
+    const q = String(req.query.q ?? '').slice(0, 40);
+    void deps.users.adminSearchUsers(q).then((rows) => {
+      res.json({
+        users: rows.map((u) => ({
+          userId: Number(u.user_id),
+          username: u.username,
+          displayName: u.display_name,
+          level: Number(u.level) || 1,
+          coins: Number(u.coins) || 0,
+          games: Number(u.games) || 0,
+          wins: Number(u.wins) || 0,
+          reputation: Number(u.reputation) || 0,
+          isBanned: Number(u.is_banned) === 1,
+          lastSeenAt: Number(u.last_seen_at) || 0,
+        })),
+      });
+    });
+  });
+
+  // coin berish/olish
+  router.post('/admin/coins/:userId', adminMiddleware, (req, res) => {
+    const uid = parseInt(req.params.userId, 10);
+    const amount = Math.trunc(Number(req.body?.amount));
+    if (!Number.isFinite(uid) || !Number.isFinite(amount)) {
+      res.status(400).json({ error: 'Noto’g’ri so‘rov' });
+      return;
+    }
+    void deps.users.adminAdjustCoins(uid, amount).then((r) => {
+      if (!r.ok) {
+        res.status(400).json({ error: r.error });
+        return;
+      }
+      ok(res, { balance: r.balance });
+    });
+  });
+
+  // xonani majburiy yopish (hammaga room:closed yuboriladi)
+  router.post('/admin/rooms/:code/close', adminMiddleware, (req, res) => {
+    const code = String(req.params.code ?? '').toUpperCase().slice(0, 8);
+    const room = deps.rooms.get(code);
+    if (!room) {
+      res.status(404).json({ error: 'Xona topilmadi' });
+      return;
+    }
+    void deps.rooms.closeRoom(code, 'Admin xonani yopdi').then(() => ok(res, {}));
   });
 
   // simple per-IP rate limit wrapper on the whole router

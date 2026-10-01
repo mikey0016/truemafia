@@ -1,10 +1,12 @@
 import type { Db } from '../database/db.js';
 import {
   ACHIEVEMENTS,
+  SHOP_ITEMS,
   type GameHistoryEntry,
   type LeaderboardEntry,
   type ProfileStats,
 } from '@truemafia/shared';
+import { isAdminId } from '../auth/admin.js';
 
 export interface UserRow {
   user_id: number | string;
@@ -24,6 +26,9 @@ export interface UserRow {
   current_streak: number;
   games_survived: number;
   is_banned: number;
+  active_frame?: string | null;
+  active_title?: string | null;
+  last_seen_at: number;
 }
 
 function num(v: unknown): number {
@@ -136,7 +141,77 @@ export class UserService {
         id: a.achievement_id,
         unlockedAt: num(a.unlocked_at),
       })),
+      frame: u.active_frame ?? undefined,
+      title: u.active_title ?? undefined,
+      isAdmin: isAdminId(num(u.user_id)),
     };
+  }
+
+  /** Market buyumini kiyish (ramka/unvon). Olinmagan bo'lsa rad etiladi. */
+  async equipItem(
+    userId: number,
+    itemId: string,
+  ): Promise<{ ok: boolean; error?: string; frame?: string; title?: string }> {
+    if (!(await this.ownsItem(userId, itemId))) {
+      return { ok: false, error: 'Avval sotib oling' };
+    }
+    const frameMatch = /^frame_(bronze|neon|gold)$/.exec(itemId);
+    const titleMatch = /^title_(.+)$/.exec(itemId);
+    if (frameMatch) {
+      await this.db.run('UPDATE users SET active_frame=$1 WHERE user_id=$2', [
+        frameMatch[1],
+        userId,
+      ]);
+      return { ok: true, frame: frameMatch[1] };
+    }
+    if (titleMatch) {
+      const u = await this.getById(userId);
+      const def = SHOP_ITEMS.find((i) => i.id === itemId);
+      const text = def?.value ?? titleMatch[1];
+      void u;
+      await this.db.run('UPDATE users SET active_title=$1 WHERE user_id=$2', [text, userId]);
+      return { ok: true, title: text };
+    }
+    return { ok: false, error: 'Buni kiyib bo‘lmaydi' };
+  }
+
+  /** Market ramkasi/unvonini yechish. */
+  async unequipItem(
+    userId: number,
+    kind: 'frame' | 'title',
+  ): Promise<{ ok: boolean }> {
+    const col = kind === 'frame' ? 'active_frame' : 'active_title';
+    await this.db.run(`UPDATE users SET ${col}=NULL WHERE user_id=$1`, [userId]);
+    return { ok: true };
+  }
+
+  /** Admin: foydalanuvchilarni id yoki ism bo'yicha qidirish. */
+  async adminSearchUsers(query: string): Promise<UserRow[]> {
+    const q = query.trim();
+    if (!q) {
+      return this.db.all<UserRow>(
+        'SELECT * FROM users ORDER BY last_seen_at DESC LIMIT 20',
+      );
+    }
+    const asId = parseInt(q, 10);
+    if (Number.isFinite(asId) && String(asId) === q) {
+      return this.db.all<UserRow>('SELECT * FROM users WHERE user_id=$1', [asId]);
+    }
+    const like = `%${q.replace(/[%_]/g, '')}%`;
+    return this.db.all<UserRow>(
+      'SELECT * FROM users WHERE username LIKE $1 OR display_name LIKE $1 ORDER BY last_seen_at DESC LIMIT 20',
+      [like],
+    );
+  }
+
+  /** Admin: coin berish/olish (manfiy ham bo'ladi, 0 dan pastga tushmaydi). */
+  async adminAdjustCoins(userId: number, amount: number): Promise<{ ok: boolean; balance?: number; error?: string }> {
+    if (!Number.isFinite(amount) || amount === 0) return { ok: false, error: 'Noto‘g‘ri summa' };
+    const u = await this.getById(userId);
+    if (!u) return { ok: false, error: 'Foydalanuvchi topilmadi' };
+    const next = Math.max(0, num(u.coins) + Math.trunc(amount));
+    await this.db.run('UPDATE users SET coins=$1 WHERE user_id=$2', [next, userId]);
+    return { ok: true, balance: next };
   }
 
   async getLeaderboard(range: 'GLOBAL' | 'WEEKLY' | 'MONTHLY'): Promise<LeaderboardEntry[]> {

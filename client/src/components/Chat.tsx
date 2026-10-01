@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChatMessage, GameSnapshot } from '@truemafia/shared';
 import { CHAT_MAX_LEN } from '@truemafia/shared';
 import { Avatar } from './Avatar';
+import { Icon } from './Icon';
 import { getSocket } from '../services/socket';
 import { haptic } from '../services/telegram';
 import { useGameStore } from '../store/gameStore';
@@ -51,7 +52,7 @@ export function Chat({ snapshot }: { snapshot: GameSnapshot }) {
     if (!t) return;
     haptic('light');
     getSocket().emit('chat:send', { channel, text: t }, (res) => {
-        if (!res.ok) useGameStore.getState().pushToast('error', res.error ?? 'Yuborilmadi');
+      if (!res.ok) useGameStore.getState().pushToast('error', res.error ?? 'Yuborilmadi');
     });
     setText('');
   };
@@ -63,70 +64,75 @@ export function Chat({ snapshot }: { snapshot: GameSnapshot }) {
 
   return (
     <div className="chat">
-      {snapshot.channels.length > 1 && (
-        <div className="tabbar">
-          {snapshot.channels.map((c) => (
-            <button
-              key={c}
-              className={c === channel ? 'active' : ''}
-              onClick={() => {
-                haptic('light');
-                setChannel(c);
-              }}
-            >
-              {CHANNEL_LABEL[c] ?? c}
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="chat-scroll" ref={scrollRef}>
-        {visible.length === 0 && (
-          <div className="empty-state">
-            Hali xabar yo‘q.{channel === 'ghosts' ? ' Nariqdan kuzatyapsiz…' : ' Sukunatni buzing.'}
+      <div className="chat-frame">
+        {snapshot.channels.length > 1 && (
+          <div className="tabbar" style={{ marginBottom: 8 }}>
+            {snapshot.channels.map((c) => (
+              <button
+                key={c}
+                className={c === channel ? (c === 'mafia' ? 'danger-active' : 'active') : ''}
+                onClick={() => {
+                  haptic('light');
+                  setChannel(c);
+                }}
+              >
+                {CHANNEL_LABEL[c] ?? c}
+              </button>
+            ))}
           </div>
         )}
-        {visible.map((m: ChatMessage) =>
-          m.senderId === 0 ? (
-            <div key={m.id} className="chat-msg system">
-              <div className="bubble">{m.text}</div>
+        <div className="chat-scroll" ref={scrollRef}>
+          {visible.length === 0 && (
+            <div className="empty-state">
+              Hali xabar yo‘q.{channel === 'ghosts' ? ' Nariqdan kuzatyapsiz…' : ' Sukunatni buzing.'}
             </div>
-          ) : (
-            <div key={m.id} className={`chat-msg ${m.senderId === myId ? 'mine' : ''}`}>
-              <Avatar src={m.photoUrl} name={m.senderName} size="sm" />
-              <div className="bubble">
-                <div className="label" style={{ marginBottom: 2, color: m.senderId === myId ? 'var(--gold)' : undefined }}>
-                  {m.senderName}
-                </div>
-                {m.text}
+          )}
+          {visible.map((m: ChatMessage) =>
+            m.senderId === 0 ? (
+              <div key={m.id} className="chat-msg system">
+                <div className="bubble">{m.text}</div>
               </div>
-            </div>
-          ),
+            ) : (
+              <div key={m.id} className={`chat-msg ${m.senderId === myId ? 'mine' : ''}`}>
+                <Avatar src={m.photoUrl} name={m.senderName} size="sm" />
+                <div className="bubble">
+                  <div
+                    className="label"
+                    style={{ marginBottom: 2, color: m.senderId === myId ? 'var(--gold)' : undefined }}
+                  >
+                    {m.senderName}
+                  </div>
+                  {m.text}
+                </div>
+              </div>
+            ),
+          )}
+          {typing && <div className="ghost-chat-note">{typing} yozyapti…</div>}
+        </div>
+        {canChat ? (
+          <div className="chat-input-row">
+            <input
+              value={text}
+              maxLength={CHAT_MAX_LEN}
+              placeholder="Xabar…"
+              onChange={(e) => {
+                setText(e.target.value);
+                getSocket().emit('chat:typing', { channel });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') send();
+              }}
+            />
+            <button className="chat-send" onClick={send} aria-label="Yuborish">
+              <Icon name="send" size={20} />
+            </button>
+          </div>
+        ) : (
+          <div className="ghost-chat-note">
+            {channel === 'day' ? 'Sizda so‘z yo‘q — o‘lganlar gapirolmaydi.' : ''}
+          </div>
         )}
-        {typing && <div className="ghost-chat-note">{typing} yozyapti…</div>}
       </div>
-      {canChat ? (
-        <div className="chat-input-row">
-          <input
-            value={text}
-            maxLength={CHAT_MAX_LEN}
-            placeholder="Xabar…"
-            onChange={(e) => {
-              setText(e.target.value);
-              getSocket().emit('chat:typing', { channel });
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') send();
-            }}
-          />
-          <button className="btn" style={{ width: 56, flexShrink: 0 }} onClick={send}>
-            ➤
-          </button>
-        </div>
-      ) : (
-        <div className="ghost-chat-note">
-          {channel === 'day' ? 'Sizda so‘z yo‘q (o‘lganlar gapirolmaydi).' : ''}
-        </div>
-      )}
     </div>
   );
 }

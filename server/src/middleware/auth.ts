@@ -6,6 +6,7 @@ import {
   validateInitDataDetailed,
   type TelegramAuthUser,
 } from '../auth/telegram.js';
+import { isAdminId } from '../auth/admin.js';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -66,12 +67,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 }
 
 export function adminMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const ids = (process.env.ADMIN_IDS || '')
-    .split(',')
-    .map((s) => parseInt(s.trim(), 10))
-    .filter((n) => Number.isFinite(n));
   const uid = req.tgUser?.userId;
-  if (!uid || !ids.includes(uid)) {
+  if (!uid || !isAdminId(uid)) {
     res.status(403).json({ error: 'Taqiqlangan' });
     return;
   }
