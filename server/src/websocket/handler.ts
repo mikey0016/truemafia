@@ -104,29 +104,44 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
   io.on('connection', (socket: AppSocket) => {
     let authed = false;
 
-    socket.on('auth', (initData: string, ack?: (res: { ok: boolean; error?: string }) => void) => {
-      const botToken = process.env.BOT_TOKEN || '';
-      let u = botToken ? validateInitData(initData, botToken) : null;
-      if (!u && process.env.DEV_SKIP_AUTH === '1' && process.env.NODE_ENV !== 'production') {
-        u = parseInitDataInsecure(initData) || {
-          userId: 1,
-          username: 'devuser',
-          displayName: 'Dev User',
-          authDate: Date.now(),
-        };
-      }
-      if (!u) {
-        ack?.({ ok: false, error: 'Invalid auth' });
-        return;
-      }
-      socket.data.userId = u.userId;
-      socket.data.username = u.username;
-      socket.data.displayName = u.displayName;
-      socket.data.photoUrl = u.photoUrl;
-      authed = true;
-      socket.join(`user:${u.userId}`);
-      ack?.({ ok: true });
-    });
+    socket.on(
+      'auth',
+      (
+        payload: string | { initData?: string; guestId?: number; guestName?: string },
+        ack?: (res: { ok: boolean; error?: string }) => void,
+      ) => {
+        const initData = typeof payload === 'string' ? payload : payload?.initData || '';
+        const botToken = process.env.BOT_TOKEN || '';
+        let u = botToken ? validateInitData(initData, botToken) : null;
+        if (!u && process.env.DEV_SKIP_AUTH === '1' && process.env.NODE_ENV !== 'production') {
+          u = parseInitDataInsecure(initData) || {
+            userId: 1,
+            username: 'devuser',
+            displayName: 'Dev User',
+            authDate: Date.now(),
+          };
+        }
+        if (!u && typeof payload === 'object' && payload) {
+          // Mehmon rejimi: manfiy id (real Telegram id'lar musbat).
+          const gid = payload.guestId;
+          if (typeof gid === 'number' && Number.isSafeInteger(gid) && gid < 0 && gid > -1e12) {
+            const gname = String(payload.guestName || '').slice(0, 24) || `Guest${-gid % 10000}`;
+            u = { userId: gid, username: gname, displayName: gname, authDate: Date.now(), isGuest: true };
+          }
+        }
+        if (!u) {
+          ack?.({ ok: false, error: 'Invalid auth' });
+          return;
+        }
+        socket.data.userId = u.userId;
+        socket.data.username = u.username;
+        socket.data.displayName = u.displayName;
+        socket.data.photoUrl = u.photoUrl;
+        authed = true;
+        socket.join(`user:${u.userId}`);
+        ack?.({ ok: true });
+      },
+    );
 
     const requireAuth = (): boolean => {
       if (authed) return true;

@@ -2,13 +2,23 @@ import { io, type Socket } from 'socket.io-client';
 import type { ClientToServerEvents, ServerToClientEvents } from '@truemafia/shared';
 import { getInitData } from './telegram';
 import { getBackendUrl } from '../config';
+import { getGuestId, getIdentity } from './identity';
 
 export interface AuthResult {
   ok: boolean;
   error?: string;
 }
 
-type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents & { auth: (initData: string, ack: (res: AuthResult) => void) => void }>;
+export interface AuthPayload {
+  initData: string;
+  guestId?: number;
+  guestName?: string;
+}
+
+type AppSocket = Socket<
+  ServerToClientEvents,
+  Omit<ClientToServerEvents, never> & { auth: (payload: AuthPayload, ack: (res: AuthResult) => void) => void }
+>;
 
 let socket: AppSocket | null = null;
 
@@ -24,9 +34,14 @@ export function getSocket(): AppSocket {
   });
 
   socket.on('connect', () => {
-    socket!.emit('auth', getInitData(), (res) => {
-      if (!res.ok) console.warn('[true-mafia] socket auth failed:', res.error);
-    });
+    const me = getIdentity();
+    socket!.emit(
+      'auth',
+      { initData: getInitData(), guestId: me.id ?? getGuestId(), guestName: me.name },
+      (res) => {
+        if (!res.ok) console.warn('[true-mafia] socket auth failed:', res.error);
+      },
+    );
   });
 
   return socket;

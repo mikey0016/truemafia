@@ -6,6 +6,8 @@ export interface TelegramAuthUser {
   displayName: string;
   photoUrl?: string;
   authDate: number;
+  /** true = Telegram'siz mehmon (brauzer). Real id'lar har doim musbat. */
+  isGuest?: boolean;
 }
 
 /**

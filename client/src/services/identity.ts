@@ -7,6 +7,7 @@ export interface Identity {
 }
 
 const GUEST_KEY = 'tm_guest_name';
+const GUEST_ID_KEY = 'tm_guest_id';
 
 /** Telegram bo'lmasa — mehmon ismi (localStorage'da saqlanadi, avatar harfi uchun). */
 export function getGuestName(): string {
@@ -29,6 +30,19 @@ export function setGuestName(name: string): void {
   }
 }
 
+/** Doimiy mehmon id (manfiy — real Telegram id'lar bilan to'qnashmaydi). */
+export function getGuestId(): number {
+  try {
+    const saved = parseInt(localStorage.getItem(GUEST_ID_KEY) || '', 10);
+    if (Number.isSafeInteger(saved) && saved < 0) return saved;
+    const id = -(100000000 + Math.floor(Math.random() * 899999999));
+    localStorage.setItem(GUEST_ID_KEY, String(id));
+    return id;
+  } catch {
+    return -100000001;
+  }
+}
+
 /** Telegram user bo'lsa uni, bo'lmasa mehmon identity'ni qaytaradi. */
 export function getIdentity(): Identity {
   const tg = getTgUser();
@@ -39,5 +53,5 @@ export function getIdentity(): Identity {
       photo: tg.photo_url,
     };
   }
-  return { id: null, name: getGuestName() };
+  return { id: getGuestId(), name: getGuestName() };
 }

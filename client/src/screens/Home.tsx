@@ -132,7 +132,7 @@ export function Home() {
           </button>
         ))}
       </div>
-      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.0.4</div>
+      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.0.5</div>
     </div>
   );
 }

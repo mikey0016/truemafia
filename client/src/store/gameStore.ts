@@ -11,7 +11,7 @@ import type {
 import type { AchievementDef } from '@truemafia/shared';
 import { ACHIEVEMENTS } from '@truemafia/shared';
 import { getInitData } from '../services/telegram';
-import { getGuestName } from '../services/identity';
+import { getGuestId, getGuestName } from '../services/identity';
 import { apiUrl } from '../config';
 
 /**
@@ -21,7 +21,13 @@ import { apiUrl } from '../config';
  * local/Telegram'da esa relative (/api) ishlaydi.
  */
 async function apiFetch(url: string): Promise<Response> {
-  return fetch(apiUrl(url), { headers: { 'x-telegram-init-data': getInitData() } });
+  return fetch(apiUrl(url), {
+    headers: {
+      'x-telegram-init-data': getInitData(),
+      'x-guest-id': String(getGuestId()),
+      'x-guest-name': getGuestName(),
+    },
+  });
 }
 
 export type Screen =
