@@ -199,6 +199,14 @@ export function startTelegramBot(): () => void {
 
   console.log(`[bot] polling boshlandi (webApp=${cfg.webAppUrl})`);
 
+  // Chat menu tugmasini (xabar yozish maydoni yonidagi) webapp URL'iga yangilash —
+  // BotFather'da eski URL qolgan bo'lsa ham avtomatik to'g'rilanadi.
+  if (/^https:\/\//i.test(cfg.webAppUrl)) {
+    api(token, 'setChatMenuButton', {
+      menu_button: { type: 'web_app', text: "O'ynash", web_app: { url: cfg.webAppUrl } },
+    }).catch((e) => console.error('[bot] setChatMenuButton:', e));
+  }
+
   // Menyuda /start, /play, /rules, /help chiqishi uchun
   api(token, 'setMyCommands', {
     commands: [
