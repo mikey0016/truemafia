@@ -16,16 +16,28 @@ export function Join() {
   }, [loadOpenRooms]);
 
   const quick = () => {
+    if (!getSocket().connected) {
+      hapticNotify('error');
+      pushToast('error', 'Backend ulanmagan — Settings’da server URL’ni kiriting');
+      return;
+    }
     setBusy('quick');
     playSound('click');
     haptic('medium');
-    getSocket().emit('room:quick', {}, (res) => {
-      setBusy(null);
-      if (!res.ok) {
-        hapticNotify('error');
-        pushToast('error', res.error ?? 'No open rooms');
-      }
-    });
+    getSocket()
+      .timeout(10000)
+      .emit('room:quick', {}, (err: unknown, res?: { ok: boolean; error?: string }) => {
+        setBusy(null);
+        if (err) {
+          hapticNotify('error');
+          pushToast('error', 'Server javob bermadi — keyinroq urinib ko‘ring');
+          return;
+        }
+        if (!res?.ok) {
+          hapticNotify('error');
+          pushToast('error', res?.error ?? 'No open rooms');
+        }
+      });
   };
 
   const join = (roomCode?: string) => {
@@ -34,16 +46,28 @@ export function Join() {
       pushToast('error', 'Enter a room code');
       return;
     }
+    if (!getSocket().connected) {
+      hapticNotify('error');
+      pushToast('error', 'Backend ulanmagan — Settings’da server URL’ni kiriting');
+      return;
+    }
     setBusy(roomCode ? `room:${c}` : 'join');
     playSound('click');
     haptic('medium');
-    getSocket().emit('room:join', { code: c }, (res) => {
-      setBusy(null);
-      if (!res.ok) {
-        hapticNotify('error');
-        pushToast('error', res.error ?? 'Room not found');
-      }
-    });
+    getSocket()
+      .timeout(10000)
+      .emit('room:join', { code: c }, (err: unknown, res?: { ok: boolean; error?: string }) => {
+        setBusy(null);
+        if (err) {
+          hapticNotify('error');
+          pushToast('error', 'Server javob bermadi — keyinroq urinib ko‘ring');
+          return;
+        }
+        if (!res?.ok) {
+          hapticNotify('error');
+          pushToast('error', res?.error ?? 'Room not found');
+        }
+      });
   };
 
   return (

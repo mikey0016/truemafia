@@ -37,18 +37,31 @@ export function Create() {
   };
 
   const create = () => {
+    if (!getSocket().connected) {
+      hapticNotify('error');
+      pushToast('error', 'Backend ulanmagan — Settings’da server URL’ni kiriting');
+      return;
+    }
     setCreating(true);
     playSound('click');
     haptic('medium');
-    getSocket().emit('room:create', { settings, demoBots: bots }, (res) => {
-      setCreating(false);
-      if (!res.ok) {
-        hapticNotify('error');
-        pushToast('error', res.error ?? 'Failed to create room');
-        return;
-      }
-      hapticNotify('success');
-    });
+    // timeout: server javob bermasa abadiy "CREATING…" da qotib qolmaydi
+    getSocket()
+      .timeout(10000)
+      .emit('room:create', { settings, demoBots: bots }, (err: unknown, res?: { ok: boolean; error?: string }) => {
+        setCreating(false);
+        if (err) {
+          hapticNotify('error');
+          pushToast('error', 'Server javob bermadi — keyinroq urinib ko‘ring');
+          return;
+        }
+        if (!res?.ok) {
+          hapticNotify('error');
+          pushToast('error', res?.error ?? 'Failed to create room');
+          return;
+        }
+        hapticNotify('success');
+      });
   };
 
   return (
