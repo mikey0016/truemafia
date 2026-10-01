@@ -10,6 +10,18 @@ import type {
 } from '@truemafia/shared';
 import type { AchievementDef } from '@truemafia/shared';
 import { ACHIEVEMENTS } from '@truemafia/shared';
+import { getInitData } from '../services/telegram';
+import { apiUrl } from '../config';
+
+/**
+ * REST so'rovlarida Telegram initData header'ini yuborish —
+ * server authMiddleware shu header bo'yicha tekshiradi (x-telegram-init-data).
+ * GitHub Pages'da VITE_BACKEND_URL orqali absolut backend'ga boradi,
+ * local/Telegram'da esa relative (/api) ishlaydi.
+ */
+async function apiFetch(url: string): Promise<Response> {
+  return fetch(apiUrl(url), { headers: { 'x-telegram-init-data': getInitData() } });
+}
 
 export type Screen =
   | 'home'
@@ -119,7 +131,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   loadProfile: async () => {
     set({ profileLoading: true });
     try {
-      const res = await fetch('/api/me');
+      const res = await apiFetch('/api/me');
       const json = (await res.json()) as { profile: ProfileStats | null };
       set({ profile: json.profile, profileLoading: false });
     } catch {
@@ -173,7 +185,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   loadLeaderboard: async (range) => {
     set({ leaderboardLoading: true });
     try {
-      const res = await fetch(`/api/leaderboard?range=${range}`);
+      const res = await apiFetch(`/api/leaderboard?range=${range}`);
       const json = (await res.json()) as { entries: LeaderboardEntry[] };
       set({ leaderboard: json.entries ?? [], leaderboardLoading: false });
     } catch {
@@ -186,7 +198,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   loadHistory: async () => {
     set({ historyLoading: true });
     try {
-      const res = await fetch('/api/history');
+      const res = await apiFetch('/api/history');
       const json = (await res.json()) as { history: GameHistoryEntry[] };
       set({ history: json.history ?? [], historyLoading: false });
     } catch {

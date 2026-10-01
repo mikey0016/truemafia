@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // GitHub Pages project site: https://<user>.github.io/truemafia/
+  // GITHUB_PAGES=1 yoki VITE_BASE env bilan build qilinsa shu base ishlatiladi.
+  base: process.env.VITE_BASE || (process.env.GITHUB_PAGES === '1' ? '/truemafia/' : '/'),
   server: {
     port: 5173,
     proxy: {

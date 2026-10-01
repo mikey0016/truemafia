@@ -11,6 +11,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Without DB_CLIENT=postgres the server treats DATABASE_URL as a SQLite file path.
+      - key: DB_CLIENT
+        value: postgres
       - key: DATABASE_URL
         sync: false # Neon Postgres connection string
       - key: BOT_TOKEN

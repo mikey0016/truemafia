@@ -8,6 +8,7 @@ dotenv.config();
 dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 import express from 'express';
 import cors from 'cors';
+import fs from 'node:fs';
 import type { Server as IOServer } from 'socket.io';
 import { createDb } from './database/db.js';
 import { migrate } from './database/migrate.js';
@@ -48,6 +49,13 @@ async function main(): Promise<void> {
 
   app.get('/api/health', (_req, res) => res.json({ ok: true, time: Date.now() }));
   app.use('/api', authMiddleware, createApiRouter({ db, users, rooms }));
+
+  // SPA fallback: built client'dagi barcha no-API route'lar index.html ga qaytadi
+  const indexHtml = path.join(clientDist, 'index.html');
+  app.get(/^(?!\/api\/|\/socket\.io\/).*/, (_req, res, next) => {
+    if (!fs.existsSync(indexHtml)) return next();
+    res.sendFile(indexHtml);
+  });
 
   const server = http.createServer(app);
   const botControllers = new Map<string, BotController>();

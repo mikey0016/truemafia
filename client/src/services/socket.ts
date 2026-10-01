@@ -1,6 +1,7 @@
 import { io, type Socket } from 'socket.io-client';
 import type { ClientToServerEvents, ServerToClientEvents } from '@truemafia/shared';
 import { getInitData } from './telegram';
+import { BACKEND_URL } from '../config';
 
 export interface AuthResult {
   ok: boolean;
@@ -13,7 +14,7 @@ let socket: AppSocket | null = null;
 
 export function getSocket(): AppSocket {
   if (socket) return socket;
-  socket = io({
+  socket = io(BACKEND_URL || undefined, {
     transports: ['websocket', 'polling'],
     reconnection: true,
     reconnectionDelay: 600,

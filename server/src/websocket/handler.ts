@@ -108,7 +108,12 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       const botToken = process.env.BOT_TOKEN || '';
       let u = botToken ? validateInitData(initData, botToken) : null;
       if (!u && process.env.DEV_SKIP_AUTH === '1' && process.env.NODE_ENV !== 'production') {
-        u = parseInitDataInsecure(initData);
+        u = parseInitDataInsecure(initData) || {
+          userId: 1,
+          username: 'devuser',
+          displayName: 'Dev User',
+          authDate: Date.now(),
+        };
       }
       if (!u) {
         ack?.({ ok: false, error: 'Invalid auth' });

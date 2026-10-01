@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22-alpine
+# node:sqlite requires Node >= 24 (unflagged & stable); Node 22 needs --experimental-sqlite
+FROM node:24-alpine
 
 # Install fly.io-friendly init for proper signal handling
 RUN apk add --no-cache curl
@@ -29,7 +30,11 @@ ENV NODE_ENV=production
 
 WORKDIR /app/server
 
-# SQLite fayli shu papkada yashaydi; Fly volume shu yerga mount qilinadi
+# SQLite volume papkasi (Fly.io / Docker)
+RUN mkdir -p /data
+
+# Local/Docker fallback: SQLite fayli shu papkada yashaydi.
+# Render'da DB_CLIENT=postgres + DATABASE_URL env orqali beriladi.
 ENV DATABASE_URL=/data/true-mafia.sqlite
 
 EXPOSE 3000
