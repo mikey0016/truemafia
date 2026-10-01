@@ -11,6 +11,7 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'node:fs';
 import type { Server as IOServer } from 'socket.io';
+import { APP_VERSION } from '@truemafia/shared';
 import { createDb } from './database/db.js';
 import { migrate } from './database/migrate.js';
 import { UserService } from './services/userService.js';
@@ -55,7 +56,7 @@ async function main(): Promise<void> {
     res.json({
       ok: true,
       time: Date.now(),
-      version: 'v2.0.1',
+      version: APP_VERSION,
       adminConfigured: (process.env.ADMIN_IDS || '').trim().length > 0,
     }),
   );

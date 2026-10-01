@@ -5,6 +5,7 @@ import { getBackendUrl, setBackendUrl } from '../config';
 import { getSocket } from '../services/socket';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useGameStore } from '../store/gameStore';
+import { APP_VERSION } from '@truemafia/shared';
 
 export function Settings() {
   const [prefs, setPrefs] = useState(loadSoundPrefs());
@@ -121,7 +122,7 @@ export function Settings() {
       </div>
 
       <div className="spacer" />
-      <div className="ghost-chat-note">NIGHTFALL MAFIA · v2.0.0 NOIR</div>
+      <div className="ghost-chat-note">NIGHTFALL MAFIA · {APP_VERSION} NOIR</div>
     </div>
   );
 }

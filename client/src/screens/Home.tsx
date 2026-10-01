@@ -4,6 +4,7 @@ import { Avatar } from '../components/Avatar';
 import { Icon } from '../components/Icon';
 import { haptic } from '../services/telegram';
 import { playSound, unlockAudio } from '../services/sound';
+import { APP_VERSION } from '@truemafia/shared';
 
 export function Home() {
   const { profile, profileLoading, tgName, tgPhoto, loadProfile, navigate } = useGameStore();
@@ -147,7 +148,7 @@ export function Home() {
           </button>
         ))}
       </div>
-      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v2.0.0 · NOIR</div>
+      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>{APP_VERSION} · NOIR</div>
     </div>
   );
 }

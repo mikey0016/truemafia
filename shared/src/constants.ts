@@ -1,5 +1,8 @@
 import type { RoleId, RoomSettings } from './roles.js';
 
+/** Ilova versiyasi — client (Home/Settings) va server (/api/health) shu yerdan o'qiydi. */
+export const APP_VERSION = 'v2.0.1';
+
 export const DEFAULT_SETTINGS: RoomSettings = {
   gameType: 'CLASSIC',
   playerCount: 8,
