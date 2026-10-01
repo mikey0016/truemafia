@@ -53,6 +53,8 @@ export interface ServerToClientEvents {
       players: PublicPlayer[];
       settings: RoomSettings;
       hostId: number;
+      /** karta tanlash rejimidagi band kartalar (ochiq draft) */
+      rolePicks: { userId: number; displayName: string; roleId: RoleId }[];
     };
     you: { isHost: boolean; ready: boolean };
   }) => void;
@@ -76,6 +78,8 @@ export interface ClientToServerEvents {
   'room:join': (payload: JoinRoomPayload, ack: (res: AckResult) => void) => void;
   'room:leave': (payload: Record<string, never>, ack: (res: AckResult) => void) => void;
   'room:ready': (payload: { ready: boolean }, ack: (res: AckResult) => void) => void;
+  /** karta tanlash rejimi: o'z kartani tanlash / bekor qilish (roleId null) */
+  'room:pickRole': (payload: { roleId: RoleId | null }, ack: (res: AckResult) => void) => void;
   'room:start': (payload: { addBots?: number }, ack: (res: AckResult) => void) => void;
   'game:action': (payload: ActionPayload, ack: (res: AckResult) => void) => void;
   'game:vote': (payload: VotePayload, ack: (res: AckResult) => void) => void;

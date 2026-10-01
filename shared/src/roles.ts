@@ -149,6 +149,13 @@ export interface RoomSettings {
   privateRoom: boolean;
   revealRolesOnDeath: boolean;
   anonymousVoting: boolean;
+  /** Botlar soni (0 = yo'q). O'yin boshlanishida lobby'ga qo'shiladi. */
+  botCount: number;
+  /**
+   * Karta tanlash rejimi: random o'rniga har kim lobby'da o'z kartasini tanlaydi
+   * (bo'sh kartalar startda random to'ldiriladi).
+   */
+  roleDraft: boolean;
 }
 
 export interface PublicPlayer {

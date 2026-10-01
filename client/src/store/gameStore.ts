@@ -5,6 +5,7 @@ import type {
   GameSnapshot,
   ProfileStats,
   PublicPlayer,
+  RoleId,
   RoomSettings,
   LeaderboardEntry,
 } from '@truemafia/shared';
@@ -89,13 +90,15 @@ interface GameState {
   roomCode: string | null;
   roomPlayers: PublicPlayer[];
   roomSettings: RoomSettings | null;
+  rolePicks: { userId: number; displayName: string; roleId: RoleId }[];
   isHost: boolean;
   ready: boolean;
   setRoomState: (s: {
-    room: { code: string; players: PublicPlayer[]; settings: RoomSettings };
+    room: { code: string; players: PublicPlayer[]; settings: RoomSettings; rolePicks?: { userId: number; displayName: string; roleId: RoleId }[] };
     you: { isHost: boolean; ready: boolean };
   }) => void;
   clearRoom: () => void;
+  pickRole: (roleId: RoleId | null) => void;
 
   // game
   snapshot: GameSnapshot | null;
@@ -209,6 +212,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   roomCode: null,
   roomPlayers: [],
   roomSettings: null,
+  rolePicks: [],
   isHost: false,
   ready: false,
   setRoomState: ({ room, you }) =>
@@ -216,11 +220,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       roomCode: room.code,
       roomPlayers: room.players,
       roomSettings: room.settings,
+      rolePicks: room.rolePicks ?? [],
       isHost: you.isHost,
       ready: you.ready,
     }),
   clearRoom: () =>
-    set({ roomCode: null, roomPlayers: [], roomSettings: null, isHost: false, ready: false, snapshot: null }),
+    set({ roomCode: null, roomPlayers: [], roomSettings: null, rolePicks: [], isHost: false, ready: false, snapshot: null }),
+  pickRole: (roleId) => {
+    import('../services/socket').then(({ getSocket }) => {
+      getSocket().emit('room:pickRole', { roleId }, (res) => {
+        if (!res.ok) get().pushToast('error', res.error ?? 'Cannot pick');
+      });
+    });
+  },
 
   snapshot: null,
   setSnapshot: (s) => set({ snapshot: s }),

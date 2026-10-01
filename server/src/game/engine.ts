@@ -53,6 +53,8 @@ export class GameEngine {
   resultSeconds = 8;
   private continueVotes = new Set<number>();
   private snapshotTimer: NodeJS.Timeout | null = null;
+  /** Karta tanlash rejimi: userId -> tanlangan rol (lobby, ochiq draft) */
+  private rolePicks = new Map<number, RoleId>();
 
   constructor(
     public room: RoomLike,
@@ -100,6 +102,7 @@ export class GameEngine {
     if (this.phase !== 'LOBBY') return;
     this.players = this.players.filter((p) => p.userId !== userId);
     this.ready.delete(userId);
+    this.rolePicks.delete(userId);
     // reseat
     this.players.forEach((p, i) => (p.seat = i + 1));
     if (this.hostId === userId && this.players.length > 0) {
@@ -123,6 +126,7 @@ export class GameEngine {
     if (this.over) {
       // o'yin tugagan — xavfsiz o'chirish (rematch hisobida qotib qolmasin)
       this.players = this.players.filter((x) => x.userId !== userId);
+      this.rolePicks.delete(userId);
       this.continueVotes.delete(userId);
       this.broadcastSnapshot();
       return;
@@ -170,6 +174,10 @@ export class GameEngine {
   }
 
   private assignRoles(): void {
+    if (this.settings.roleDraft && this.rolePicks.size > 0) {
+      this.assignRolesDraft();
+      return;
+    }
     const plan = buildRolePlan(this.settings, this.players.length);
     const shuffled = [...this.players];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -179,6 +187,75 @@ export class GameEngine {
     shuffled.forEach((p, i) => {
       p.role = plan[i] ?? 'CITIZEN';
     });
+  }
+
+  /**
+   * Karta tanlash rejimi: tanlangan kartalar egalarida qoladi,
+   * qolganlar bo'sh kartalardan random oladi.
+   */
+  private assignRolesDraft(): void {
+    const pool = buildRolePlan(this.settings, this.settings.playerCount);
+    const quota = new Map<RoleId, number>();
+    for (const r of pool) quota.set(r, (quota.get(r) ?? 0) + 1);
+    // 1) tasdiqlangan tanlovlar (kvota pick paytida tekshirilgan, pool statik)
+    for (const p of this.players) {
+      const pick = this.rolePicks.get(p.userId);
+      if (pick && (quota.get(pick) ?? 0) > 0) {
+        p.role = pick;
+        quota.set(pick, (quota.get(pick) ?? 0) - 1);
+      }
+    }
+    // 2) qolgan kartalarni aralashtirib tarqatish
+    const rest: RoleId[] = [];
+    for (const [r, n] of quota) for (let i = 0; i < n; i++) rest.push(r);
+    for (let i = rest.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rest[i], rest[j]] = [rest[j], rest[i]];
+    }
+    const need = this.players.filter((p) => {
+      const pick = this.rolePicks.get(p.userId);
+      return !pick || p.role !== pick;
+    });
+    need.forEach((p, i) => {
+      p.role = rest[i] ?? 'CITIZEN';
+    });
+    this.rolePicks.clear();
+  }
+
+  /**
+   * Lobby'da karta tanlash (faqat roleDraft rejimida).
+   * roleId null = tanlovni bekor qilish.
+   */
+  pickRole(userId: number, roleId: RoleId | null): { ok: boolean; error?: string } {
+    if (!this.settings.roleDraft) return { ok: false, error: 'Draft disabled' };
+    if (this.phase !== 'LOBBY') return { ok: false, error: 'Too late' };
+    const p = this.players.find((x) => x.userId === userId);
+    if (!p || p.isBot) return { ok: false, error: 'Not in room' };
+    if (roleId === null) {
+      this.rolePicks.delete(userId);
+      this.hooks.onPhaseChanged();
+      return { ok: true };
+    }
+    const pool = buildRolePlan(this.settings, this.settings.playerCount);
+    const quota = pool.filter((r) => r === roleId).length;
+    if (quota === 0) return { ok: false, error: 'No such card' };
+    let used = 0;
+    for (const [uid, r] of this.rolePicks) {
+      if (uid !== userId && r === roleId) used++;
+    }
+    if (used >= quota) return { ok: false, error: 'Card already taken' };
+    this.rolePicks.set(userId, roleId);
+    this.hooks.onPhaseChanged();
+    return { ok: true };
+  }
+
+  getRolePicks(): { userId: number; displayName: string; roleId: RoleId }[] {
+    const out: { userId: number; displayName: string; roleId: RoleId }[] = [];
+    for (const [uid, roleId] of this.rolePicks) {
+      const p = this.players.find((x) => x.userId === uid);
+      if (p) out.push({ userId: uid, displayName: p.displayName, roleId });
+    }
+    return out;
   }
 
   // ---------- NIGHT ----------

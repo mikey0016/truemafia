@@ -16,6 +16,8 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   privateRoom: false,
   revealRolesOnDeath: true,
   anonymousVoting: false,
+  botCount: 0,
+  roleDraft: false,
 };
 
 export const PHASE_SECONDS: Record<string, number> = {

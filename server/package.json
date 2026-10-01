@@ -8,8 +8,9 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "npm run test:engine && npm run test:recorder && npm run test:auth",
+    "test": "npm run test:engine && npm run test:recorder && npm run test:auth && npm run test:draft",
     "test:engine": "tsx src/engine/engine.test.ts",
+    "test:draft": "tsx src/game/draft.test.ts",
     "test:recorder": "tsx src/recorder/gameRecorder.test.ts",
     "test:auth": "tsx src/auth/auth.test.ts"
   },

@@ -20,6 +20,8 @@ export class GameRecorder {
   ) {}
 
   async recordFinishedGame(engine: GameEngine, winner: Team, reason: string): Promise<NewUnlock[]> {
+    // Botli (demo) o'yinlar reytingga yozilmaydi — boosting oldini olish uchun.
+    if (engine.demoMode) return [];
     const humans = engine.players.filter((p) => !p.isBot);
     if (humans.length === 0) return [];
     const unlocks: NewUnlock[] = [];

@@ -88,7 +88,8 @@ Botda `/start` bossangiz — bot haqida ma'lumot (rollar, fazalar) + 🎮 O'ynas
 
 - **Rollar**: Mafiya (tunda o'ldiradi), Detektiv (tekshiradi), Doktor (davolaydi), Oddiy fuqarolar, Mustaqil rollar
 - **Fazalar**: LOBBY → NIGHT → NIGHT_RESULT → DAY → DISCUSSION → VOTING → VOTE_RESULT → GAME_OVER
-- Botlar dev rejimida har qanday rol bilan to'ldiriladi, real o'yinchilar yetmasa ham o'yin to'liq o'tadi
+- **🤖 Botlar**: Create Room'da BOTS sonini tanlang — lobby botlar bilan to'ladi, o'yin to'liq o'tadi. Botli o'yinlar reytingga yozilmaydi (casual)
+- **🎴 Role draft**: Create Room'da yoqilsa, random o'rniga har kim lobby'da o'z kartasini tanlaydi (kim birinchi — o'shaniki). Qolgan kartalar startda random tarqatiladi
 
 ## Skriptlar
 
@@ -97,5 +98,5 @@ Botda `/start` bossangiz — bot haqida ma'lumot (rollar, fazalar) + 🎮 O'ynas
 | `npm run dev` | Server + client parallel (watch rejimida) |
 | `npm run build` | Shared + client production build |
 | `npm start` | Faqat server (production) |
-| `npm test` | Server testlari (engine, recorder) |
+| `npm test` | Server testlari (engine, recorder, auth, draft) |
 | `npm run typecheck` | Barcha workspace'larni tip tekshiruvi |

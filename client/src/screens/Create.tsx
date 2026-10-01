@@ -25,11 +25,10 @@ export function Create() {
     privateRoom: false,
     revealRolesOnDeath: true,
     anonymousVoting: false,
+    botCount: 0,
+    roleDraft: false,
   });
   const [creating, setCreating] = useState(false);
-  const [bots, setBots] = useState(0);
-
-  const isDev = import.meta.env.DEV;
 
   const update = (patch: Partial<RoomSettings>) => {
     haptic('light');
@@ -50,7 +49,7 @@ export function Create() {
     // timeout: server javob bermasa abadiy "CREATING…" da qotib qolmaydi
     getSocket()
       .timeout(10000)
-      .emit('room:create', { settings, demoBots: bots }, (err: unknown, res?: { ok: boolean; error?: string }) => {
+      .emit('room:create', { settings }, (err: unknown, res?: { ok: boolean; error?: string }) => {
         setCreating(false);
         if (err) {
           hapticNotify('error');
@@ -162,20 +161,25 @@ export function Create() {
           <span>Anonymous voting</span>
           <button className={`toggle ${settings.anonymousVoting ? 'on' : ''}`} onClick={() => update({ anonymousVoting: !settings.anonymousVoting })} />
         </div>
+        <div className="toggle-row">
+          <span>🎴 Role draft <span className="dim" style={{ fontSize: '0.72rem' }}>(choose cards)</span></span>
+          <button className={`toggle ${settings.roleDraft ? 'on' : ''}`} onClick={() => update({ roleDraft: !settings.roleDraft })} />
+        </div>
       </div>
 
-      {isDev && (
-        <div className="card">
-          <div className="label" style={{ marginBottom: 10 }}>DEMO BOTS (DEV ONLY)</div>
-          <div className="chip-row">
-            {[0, 3, 5, 7].map((n) => (
-              <button key={n} className={`chip ${bots === n ? 'active' : ''}`} onClick={() => setBots(n)}>
-                {n === 0 ? 'None' : `+${n}`}
-              </button>
-            ))}
-          </div>
+      <div className="card">
+        <div className="label" style={{ marginBottom: 10 }}>🤖 BOTS</div>
+        <div className="chip-row">
+          {[0, 1, 3, 5, 7].filter((n) => n < (settings.playerCount ?? 8)).map((n) => (
+            <button key={n} className={`chip ${settings.botCount === n ? 'active' : ''}`} onClick={() => update({ botCount: n })}>
+              {n === 0 ? 'None' : `+${n}`}
+            </button>
+          ))}
         </div>
-      )}
+        <div className="dim" style={{ fontSize: '0.75rem', marginTop: 8 }}>
+          Botli o'yinlar reytingga yozilmaydi (casual).
+        </div>
+      </div>
 
       <div className="spacer" />
       <button className="btn btn-primary btn-block btn-lg" disabled={creating} onClick={create}>

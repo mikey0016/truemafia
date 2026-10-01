@@ -196,11 +196,14 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         return;
       }
       const settings = sanitizeSettings(payload?.settings);
+      // Botlar: settings.botCount (prod'da ham ishlaydi) + dev-only demoBots
+      const settingsBots = clampInt(settings.botCount ?? 0, 0, 14, 0);
       const demoBots = clampInt(payload?.demoBots ?? 0, 0, 14, 0);
       if (demoBots > 0 && !isDemoAllowed()) {
         ack?.({ ok: false, error: 'Demo mode disabled' });
         return;
       }
+      const totalBots = Math.min(14, settingsBots + demoBots);
       const res = await deps.roomManager.createRoom(
         {
           userId: me().userId,
@@ -208,18 +211,18 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
           displayName: me().displayName,
           photoUrl: me().photoUrl,
         },
-        settings,
-        demoBots,
+        { ...settings, botCount: settingsBots },
+        totalBots,
         noopHooks(),
       );
       if (!res.ok) {
         ack?.({ ok: false, error: res.error });
         return;
       }
-      if (demoBots > 0) {
+      if (totalBots > 0) {
         const room = deps.roomManager.get(res.code)!;
         deps.botControllers.set(res.code, new BotController(room.engine));
-        deps.botControllers.get(res.code)!.addBots(demoBots);
+        deps.botControllers.get(res.code)!.addBots(totalBots);
       }
       joinRoomSocket(res.code);
       ack?.({ ok: true, data: { roomCode: res.code } });
@@ -282,6 +285,33 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       room.engine.setReady(me().userId, !!payload?.ready);
       ack?.({ ok: true });
       emitRoomState(room);
+    });
+
+    socket.on('room:pickRole', (payload, ack) => {
+      if (!requireAuth()) return;
+      if (!limiter.check(`pick:${me().userId}`, RATE_LIMITS.action)) {
+        ack?.({ ok: false, error: 'Slow down' });
+        return;
+      }
+      const room = findMyRoom();
+      if (!room) {
+        ack?.({ ok: false, error: 'Not in a room' });
+        return;
+      }
+      const raw = payload?.roleId;
+      const roleId =
+        raw === null || raw === undefined
+          ? null
+          : typeof raw === 'string'
+            ? (raw.toUpperCase() as import('@truemafia/shared').RoleId)
+            : null;
+      if (roleId !== null && !/^[A-Z_]+$/.test(roleId)) {
+        ack?.({ ok: false, error: 'Bad role' });
+        return;
+      }
+      const res = room.engine.pickRole(me().userId, roleId);
+      ack?.(res.ok ? { ok: true } : { ok: false, error: res.error });
+      if (res.ok) emitRoomState(room);
     });
 
     socket.on('room:start', (payload, ack) => {
@@ -396,6 +426,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       players: e.publicPlayers(),
       settings: e.settings,
       hostId: e.hostId,
+      rolePicks: e.getRolePicks(),
     };
     for (const p of e.players) {
       if (p.isBot) continue;
@@ -446,10 +477,12 @@ function sanitizeSettings(input: unknown): Partial<RoomSettings> {
     'privateRoom',
     'revealRolesOnDeath',
     'anonymousVoting',
+    'roleDraft',
   ] as const;
   for (const k of boolKeys) {
     if (typeof s[k] === 'boolean') out[k] = s[k] as boolean;
   }
+  if (typeof s.botCount === 'number') out.botCount = clampInt(s.botCount, 0, 14, 0);
   if (typeof s.discussionSeconds === 'number') {
     out.discussionSeconds = clampInt(s.discussionSeconds, 30, 600, 180);
   }
