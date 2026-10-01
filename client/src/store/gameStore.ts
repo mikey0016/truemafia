@@ -5,7 +5,6 @@ import type {
   GameSnapshot,
   ProfileStats,
   PublicPlayer,
-  RoleId,
   RoomSettings,
   LeaderboardEntry,
   ShopItem,
@@ -92,17 +91,19 @@ interface GameState {
   roomCode: string | null;
   roomPlayers: PublicPlayer[];
   roomSettings: RoomSettings | null;
-  /** kim karta tanlagani (qaysi karta — sir, o'ziniki myPick'da) */
-  rolePicks: { userId: number; displayName: string }[];
-  myPick: RoleId | null;
+  /** kim qaysi yopiq pozitsiyani (slot) olgani — rol o'zi sir saqlanadi */
+  rolePicks: { userId: number; displayName: string; slot: number }[];
+  /** o'zim tanlagan yopiq pozitsiya (null = tanlamagan) */
+  mySlot: number | null;
   isHost: boolean;
   ready: boolean;
   setRoomState: (s: {
-    room: { code: string; players: PublicPlayer[]; settings: RoomSettings; rolePicks?: { userId: number; displayName: string }[] };
-    you: { isHost: boolean; ready: boolean; pick?: RoleId | null };
+    room: { code: string; players: PublicPlayer[]; settings: RoomSettings; rolePicks?: { userId: number; displayName: string; slot: number }[] };
+    you: { isHost: boolean; ready: boolean; slot?: number | null };
   }) => void;
   clearRoom: () => void;
-  pickRole: (roleId: RoleId | null) => void;
+  /** yopiq kartani (slot) olish yoki bo'shatish (null) */
+  pickRole: (slot: number | null) => void;
 
   // game
   snapshot: GameSnapshot | null;
@@ -224,7 +225,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   roomPlayers: [],
   roomSettings: null,
   rolePicks: [],
-  myPick: null,
+  mySlot: null,
   isHost: false,
   ready: false,
   setRoomState: ({ room, you }) =>
@@ -233,15 +234,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       roomPlayers: room.players,
       roomSettings: room.settings,
       rolePicks: room.rolePicks ?? [],
-      myPick: you.pick ?? null,
+      mySlot: you.slot ?? null,
       isHost: you.isHost,
       ready: you.ready,
     }),
   clearRoom: () =>
-    set({ roomCode: null, roomPlayers: [], roomSettings: null, rolePicks: [], myPick: null, isHost: false, ready: false, snapshot: null }),
-  pickRole: (roleId) => {
+    set({ roomCode: null, roomPlayers: [], roomSettings: null, rolePicks: [], mySlot: null, isHost: false, ready: false, snapshot: null }),
+  pickRole: (slot) => {
     import('../services/socket').then(({ getSocket }) => {
-      getSocket().emit('room:pickRole', { roleId }, (res) => {
+      getSocket().emit('room:pickRole', { slot }, (res) => {
         if (!res.ok) get().pushToast('error', res.error ?? 'Tanlab bo‘lmadi');
       });
     });

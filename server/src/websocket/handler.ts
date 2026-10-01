@@ -1,8 +1,7 @@
 import type { Server as HttpServer } from 'node:http';
 import { Server as IOServer, type Socket } from 'socket.io';
 import type { ChatMessage, GameSnapshot, RoomSettings, Team } from '@truemafia/shared';
-import { ACHIEVEMENTS, CHAT_MAX_LEN, RATE_LIMITS } from '@truemafia/shared';
-import { isPremiumRole, shopItemForRole } from '@truemafia/shared';
+import { ACHIEVEMENTS, CHAT_MAX_LEN, RATE_LIMITS, SHOP_ITEMS } from '@truemafia/shared';
 import {
   failureUz,
   guestUser,
@@ -302,27 +301,18 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         ack?.({ ok: false, error: 'Xonada emassiz' });
         return;
       }
-      const raw = payload?.roleId;
-      const roleId =
-        raw === null || raw === undefined
-          ? null
-          : typeof raw === 'string'
-            ? (raw.toUpperCase() as import('@truemafia/shared').RoleId)
-            : null;
-      if (roleId !== null && !/^[A-Z_]+$/.test(roleId)) {
-        ack?.({ ok: false, error: 'Noto’g’ri rol' });
+      const raw = payload?.slot;
+      const slot = raw === null || raw === undefined ? null : Number.isInteger(raw) ? raw : NaN;
+      if (slot !== null && (!Number.isInteger(slot) || slot < 0 || slot >= room.engine.settings.playerCount)) {
+        ack?.({ ok: false, error: 'Noto\'g\'ri karta' });
         return;
       }
-      // Premium aktiv rollar — faqat marketdan sotib olganlar tanlay oladi
-      if (roleId !== null && isPremiumRole(roleId)) {
-        const item = shopItemForRole(roleId)!;
-        const owned = await deps.users.ownsItem(me().userId, item.id);
-        if (!owned) {
-          ack?.({ ok: false, error: `Qulfli — Marketdan oling (${item.price} 🪙)` });
-          return;
-        }
-      }
-      const res = room.engine.pickRole(me().userId, roleId);
+      // Premium rollar — faqat marketdan olganlarga ruxsat
+      const ownedItemIds = await deps.users.ownedItems(me().userId);
+      const ownedRoles = ownedItemIds
+        .map((id) => SHOP_ITEMS.find((item) => item.id === id)?.roleId)
+        .filter((r): r is import('@truemafia/shared').RoleId => r !== undefined);
+      const res = room.engine.pickRole(me().userId, slot, ownedRoles);
       ack?.(res.ok ? { ok: true } : { ok: false, error: res.error });
       if (res.ok) emitRoomState(room);
     });
@@ -461,7 +451,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         you: {
           isHost: e.hostId === p.userId,
           ready: (e as unknown as { ready: Set<number> }).ready.has(p.userId),
-          pick: e.getPick(p.userId),
+          slot: e.getPickSlot(p.userId),
         },
       });
     }

@@ -55,10 +55,10 @@ export interface ServerToClientEvents {
       players: PublicPlayer[];
       settings: RoomSettings;
       hostId: number;
-      /** karta tanlash rejimi: KIM tanlagani (qaysi karta — sir) */
-      rolePicks: { userId: number; displayName: string }[];
+      /** karta tanlash rejimi: KIM qaysi pozitsiyani olgani (rol — sir) */
+      rolePicks: { userId: number; displayName: string; slot: number }[];
     };
-    you: { isHost: boolean; ready: boolean; pick: RoleId | null };
+    you: { isHost: boolean; ready: boolean; slot: number | null };
   }) => void;
   'room:error': (payload: { code: string; message: string }) => void;
   'game:snapshot': (payload: GameSnapshot) => void;
@@ -80,8 +80,8 @@ export interface ClientToServerEvents {
   'room:join': (payload: JoinRoomPayload, ack: (res: AckResult) => void) => void;
   'room:leave': (payload: Record<string, never>, ack: (res: AckResult) => void) => void;
   'room:ready': (payload: { ready: boolean }, ack: (res: AckResult) => void) => void;
-  /** karta tanlash rejimi: o'z kartani tanlash / bekor qilish (roleId null) */
-  'room:pickRole': (payload: { roleId: RoleId | null }, ack: (res: AckResult) => void) => void;
+  /** karta tanlash rejimi (blind): yopiq pozitsiyani olish / bo'shatish (null) */
+  'room:pickRole': (payload: { slot: number | null }, ack: (res: AckResult) => void) => void;
   'room:start': (payload: { addBots?: number }, ack: (res: AckResult) => void) => void;
   'game:action': (payload: ActionPayload, ack: (res: AckResult) => void) => void;
   'game:vote': (payload: VotePayload, ack: (res: AckResult) => void) => void;

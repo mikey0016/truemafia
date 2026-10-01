@@ -1,29 +1,17 @@
 import { useEffect, useState } from 'react';
-import { MIN_PLAYERS, ROLES, isPremiumRole, shopItemForRole, suggestedRolePlan, type RoleId } from '@truemafia/shared';
+import { MIN_PLAYERS } from '@truemafia/shared';
 import { useGameStore } from '../store/gameStore';
 import { Avatar } from '../components/Avatar';
 import { getSocket } from '../services/socket';
 import { haptic, hapticNotify } from '../services/telegram';
 import { playSound } from '../services/sound';
 
-const ROLE_ICONS: Record<string, string> = {
-  user: '👤', skull: '💀', crown: '👑', plus: '➕', search: '🔎',
-  shield: '🛡️', knife: '🔪', masks: '🎭', drop: '🩸',
-};
-
 export function Lobby() {
-  const { roomCode, roomPlayers, roomSettings, rolePicks, myPick, isHost, ready, pickRole } = useGameStore();
-  const shopItems = useGameStore((s) => s.shopItems);
-  const loadShop = useGameStore((s) => s.loadShop);
+  const { roomCode, roomPlayers, roomSettings, rolePicks, mySlot, isHost, ready, pickRole } = useGameStore();
   const pushToast = useGameStore((s) => s.pushToast);
-  const navigate = useGameStore((s) => s.navigate);
   const [copied, setCopied] = useState(false);
   const [addingBots, setAddingBots] = useState(false);
   const isDev = import.meta.env.DEV;
-
-  useEffect(() => {
-    if (roomSettings?.roleDraft) void loadShop();
-  }, [loadShop, roomSettings?.roleDraft]);
 
   const count = roomPlayers.length;
   const target = roomSettings?.playerCount ?? MIN_PLAYERS;
@@ -130,11 +118,11 @@ export function Lobby() {
         <RoleDraftCard
           settings={roomSettings}
           pickedCount={rolePicks.length}
-          myPick={myPick}
-          onPick={(r) => {
+          mySlot={mySlot}
+          onPick={(s) => {
             haptic('light');
             playSound('click');
-            pickRole(r);
+            pickRole(s);
           }}
         />
       )}
@@ -183,78 +171,82 @@ export function Lobby() {
   );
 }
 
+/**
+ * Yopiq (blind) rol draft'i: har bir karta — faqat pozitsiya.
+ * Karta ortida qaysi rol turgani faqat server biladi; o'yin boshlanganda
+ * RoleCard komponenti orqali ochiladi. Premium-rol egaligi server tomonda
+ * tekshiriladi, shuning uchun mijozda narx/qulf UI'si yo'q.
+ */
 function RoleDraftCard({
   settings,
   pickedCount,
-  myPick,
+  mySlot,
   onPick,
 }: {
   settings: NonNullable<ReturnType<typeof useGameStore.getState>['roomSettings']>;
   pickedCount: number;
-  myPick: RoleId | null;
-  onPick: (roleId: RoleId | null) => void;
+  mySlot: number | null;
+  onPick: (slot: number | null) => void;
 }) {
-  const pool = suggestedRolePlan(settings.playerCount, settings.mafiaCount, settings);
-  const counts = new Map<RoleId, number>();
-  for (const r of pool) counts.set(r, (counts.get(r) ?? 0) + 1);
-  const order = [...counts.keys()];
-  const shopItems = useGameStore((s) => s.shopItems);
-  const pushToast = useGameStore((s) => s.pushToast);
-  const navigate = useGameStore((s) => s.navigate);
-  const owned = new Set(shopItems.filter((i) => i.owned).map((i) => i.roleId));
-
-  const tap = (role: RoleId, locked: boolean) => {
-    if (locked) {
-      const item = shopItemForRole(role);
-      pushToast('info', `Marketdan sotib oling — ${item?.price ?? '?'} 🪙`);
-      navigate('market');
-      return;
-    }
-    onPick(role);
-  };
+  const myUserId = useGameStore((s) => s.tgUserId);
+  const rolePicks = useGameStore((s) => s.rolePicks);
+  const taken = new Set(rolePicks.filter((p) => p.userId !== myUserId).map((p) => p.slot));
+  const total = Math.max(0, settings.playerCount);
 
   return (
     <div className="card">
       <div className="row-between" style={{ marginBottom: 4 }}>
         <span className="label">ROL TANLASH — YOPPIQ TANLOV 🕵️</span>
-        {myPick && (
-          <button className="btn" style={{ height: 30, padding: '0 10px', fontSize: '0.7rem' }} onClick={() => onPick(null)}>
-            TOZALASH
-          </button>
-        )}
-      </div>
-      <div className="dim" style={{ fontSize: '0.78rem', marginBottom: 4 }}>
-        {myPick
-          ? `Sizning kartangiz: ${ROLES[myPick].name} (boshqalarga ko'rinmaydi 🤫)`
-          : 'Karta tanlang — kim nima olgani sir saqlanadi.'}
+        <span className="badge badge-gold">Tanladi: {pickedCount}</span>
       </div>
       <div className="dim" style={{ fontSize: '0.78rem', marginBottom: 10 }}>
-        Tanladi: {pickedCount} kishi
+        Karta tanlang — kartada qanday rol borligini hech kim, hatto siz ham bilmaysiz.
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {order.map((role) => {
-          const def = ROLES[role];
-          const mine = myPick === role;
-          const locked = !mine && isPremiumRole(role) && !owned.has(role);
-          const price = shopItemForRole(role)?.price;
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 8 }}>
+        {Array.from({ length: total }, (_, i) => {
+          const mine = mySlot === i;
+          const takenByOther = !mine && taken.has(i);
           return (
             <button
-              key={role}
-              className="list-row card-press"
-              style={{ borderColor: mine ? def.color : undefined }}
-              onClick={() => (mine ? onPick(null) : tap(role, locked))}
+              key={i}
+              className={`card card-press${mine ? ' badge-gold' : ''}`}
+              disabled={takenByOther}
+              onClick={() => onPick(mine ? null : i)}
+              style={{
+                padding: '14px 6px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                cursor: takenByOther ? 'not-allowed' : 'pointer',
+                opacity: takenByOther ? 0.35 : 1,
+                borderColor: mine ? 'var(--gold)' : undefined,
+                boxShadow: mine ? '0 0 0 2px rgba(232, 193, 90, 0.35)' : undefined,
+              }}
             >
-              <span style={{ fontSize: '1.4rem' }}>{locked ? '🔒' : (ROLE_ICONS[def.icon] ?? '🎭')}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: def.color }}>{def.name.toUpperCase()}</div>
-                <div className="dim" style={{ fontSize: '0.75rem' }}>{def.tagline}</div>
-              </div>
-              <span className="badge" style={mine ? { borderColor: def.color, color: def.color } : undefined}>
-                {mine ? 'SIZNIKI' : locked ? `${price} 🪙` : `×${counts.get(role)}`}
+              <span style={{ fontSize: '1.5rem', filter: takenByOther ? 'grayscale(1)' : undefined }}>
+                {takenByOther ? '✖️' : '🂠'}
+              </span>
+              <span className="label">{i + 1}</span>
+              <span className={`badge${mine ? ' badge-gold' : ''}`}>
+                {mine ? 'SIZNIKI' : takenByOther ? 'OLINGAN' : 'YOPIQ'}
               </span>
             </button>
           );
         })}
+      </div>
+
+      {mySlot !== null && (
+        <div className="saved-banner" style={{ padding: 10, marginTop: 10 }}>
+          <span className="gold" style={{ fontWeight: 800, letterSpacing: '0.06em' }}>
+            Karta yopiq — rolingiz o‘yinni boshlashda ochiladi 🤫
+          </span>
+        </div>
+      )}
+      <div className="spacer" />
+      <div className="dim" style={{ fontSize: '0.72rem', textAlign: 'center' }}>
+        Tanladi: {pickedCount} kishi
       </div>
     </div>
   );

@@ -55,22 +55,20 @@ async function main(): Promise<void> {
   engine.daySeconds = 1;
   engine.resultSeconds = 1;
 
-  // p1 = MAFIA (draft kafolatlaydi)
-  assert(engine.pickRole(1, 'MAFIA').ok, 'p1 mafia pick');
+  // yopiq draft rolni kafolatlamaydi — o'yinchi rol bo'yicha topiladi
   const st = engine.start(1);
   assert(st.ok, 'start ok');
 
-  const roleOf = (id: number): string => engine.players.find((p) => p.userId === id)?.role ?? '?';
-  assert(roleOf(1) === 'MAFIA', 'p1 mafia');
+  const mafia = engine.players.find((p) => p.role === 'MAFIA' || p.role === 'DON')!.userId;
   const doctor = engine.players.find((p) => p.role === 'DOCTOR')!.userId;
   const detective = engine.players.find((p) => p.role === 'DETECTIVE')!.userId;
   const citizen = engine.players.find((p) => p.role === 'CITIZEN')!.userId;
 
   await waitFor(engine, 'NIGHT', 8000);
   // 1-tun: citizen o'ladi (3 kishi qoladi — o'yin davom etishi kerak)
-  assert(engine.submitNightAction(1, citizen).ok, 'mafia kill');
+  assert(engine.submitNightAction(mafia, citizen).ok, 'mafia kill');
   assert(engine.submitNightAction(doctor, detective).ok, 'doctor protect');
-  assert(engine.submitNightAction(detective, 1).ok, 'detective check');
+  assert(engine.submitNightAction(detective, mafia).ok, 'detective check');
   await waitFor(engine, 'DAY', 15000);
   assert(!engine.isOver, '1m+2t davom etadi');
   assert(engine.alivePlayers().length === 3, '3 kishi tirik');
@@ -78,7 +76,7 @@ async function main(): Promise<void> {
   // kun + ovoz (hech kim ovoz bermaydi) → 2-tun
   await waitFor(engine, 'NIGHT', 30000);
   // 2-tun: detective o'ladi → 1v1 → TUNDAYOQ tugashi kerak
-  assert(engine.submitNightAction(1, detective).ok, 'mafia kill 2');
+  assert(engine.submitNightAction(mafia, detective).ok, 'mafia kill 2');
   const doc = engine.players.find((p) => p.userId === doctor);
   if (doc?.alive) engine.submitNightAction(doctor, doctor); // o'zini himoya (muddati yo'q)
   await waitFor(engine, 'GAME_OVER', 15000);

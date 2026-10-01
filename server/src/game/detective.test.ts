@@ -56,21 +56,20 @@ async function main(): Promise<void> {
   engine.daySeconds = 1;
   engine.resultSeconds = 1;
 
-  assert(engine.pickRole(2, 'DETECTIVE').ok, 'p2 detective pick');
+  // yopiq draft rolni kafolatlamaydi — o'yinchi rol bo'yicha topiladi
   assert(engine.start(1).ok, 'start ok');
-  const roleOf = (id: number): string => engine.players.find((p) => p.userId === id)?.role ?? '?';
-  assert(roleOf(2) === 'DETECTIVE', 'p2 detective');
+  const detUser = engine.players.find((p) => p.role === 'DETECTIVE')!.userId;
   const mafia = engine.players.find((p) => p.role === 'MAFIA')!.userId;
   const doctor = engine.players.find((p) => p.role === 'DOCTOR')!.userId;
   const citizen = engine.players.find((p) => p.role === 'CITIZEN')!.userId;
 
   await waitFor(engine, 'NIGHT', 8000);
   // 1-tun: tekshirish ishlaydi
-  assert(engine.submitNightAction(2, citizen, 'investigate').ok, 'investigate ok');
+  assert(engine.submitNightAction(detUser, citizen, 'investigate').ok, 'investigate ok');
   assert(engine.submitNightAction(mafia, citizen).ok, 'mafia kill');
-  assert(engine.submitNightAction(doctor, 2).ok, 'doctor protect');
+  assert(engine.submitNightAction(doctor, detUser).ok, 'doctor protect');
   await waitFor(engine, 'DAY', 15000);
-  const det = engine.players.find((p) => p.userId === 2)!;
+  const det = engine.players.find((p) => p.userId === detUser)!;
   assert(det.investigations.length === 1, 'tekshiruv yozildi');
   assert(det.investigations[0].result === 'NOT_MAFIA', 'fuqaro topildi');
   assert(!engine.isOver, 'o‘yin davom etadi');
@@ -80,9 +79,9 @@ async function main(): Promise<void> {
   const docKill = engine.submitNightAction(doctor, mafia, 'kill');
   assert(!docKill.ok, 'doktor otolmaydi');
   // detektiv mafiyani otadi
-  assert(engine.submitNightAction(2, mafia, 'kill').ok, 'detective kill ok');
+  assert(engine.submitNightAction(detUser, mafia, 'kill').ok, 'detective kill ok');
   // ikkinchi o‘q — rad
-  const second = engine.submitNightAction(2, doctor, 'kill');
+  const second = engine.submitNightAction(detUser, doctor, 'kill');
   assert(!second.ok, 'ikkinchi oq rad etiladi');
   assert(engine.submitNightAction(mafia, doctor).ok, 'mafia javob zarbasi');
   assert(engine.submitNightAction(doctor, doctor).ok, 'doctor self-protect');

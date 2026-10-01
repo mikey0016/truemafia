@@ -1,9 +1,7 @@
 import {
-  DEFAULT_SETTINGS,
   MAX_PLAYERS,
   MIN_PLAYERS,
   ROLES,
-  startingTeamCounts,
   type ChatMessage,
   type GamePhase,
   type GameSnapshot,
@@ -12,6 +10,7 @@ import {
   type RoleId,
   type RoomSettings,
   type Team,
+  isPremiumRole,
 } from '@truemafia/shared';
 import type { GameEventHooks, GamePlayer, NightAction, RoomLike } from './types.js';
 
@@ -53,8 +52,8 @@ export class GameEngine {
   resultSeconds = 8;
   private continueVotes = new Set<number>();
   private snapshotTimer: NodeJS.Timeout | null = null;
-  /** Karta tanlash rejimi: userId -> tanlangan rol (lobby, ochiq draft) */
-  private rolePicks = new Map<number, RoleId>();
+  /** Karta tanlash rejimi (blind): userId -> {yashirin rol, pozitsiya} */
+  private rolePicks = new Map<number, { role: RoleId; slot: number }>();
   /** Detektivning ishlatilgan bir martalik o‘qlari */
   private detectiveShots = new Set<number>();
   /** Ketma-ket "o'lik" raundlar (na o'lim, na ovoz, na tungi harakat) — stall himoyasi */
@@ -201,9 +200,9 @@ export class GameEngine {
     const pool = buildRolePlan(this.settings, this.settings.playerCount);
     const quota = new Map<RoleId, number>();
     for (const r of pool) quota.set(r, (quota.get(r) ?? 0) + 1);
-    // 1) tasdiqlangan tanlovlar (kvota pick paytida tekshirilgan, pool statik)
+    // 1) tasdiqlangan tanlovlar
     for (const p of this.players) {
-      const pick = this.rolePicks.get(p.userId);
+      const pick = this.rolePicks.get(p.userId)?.role;
       if (pick && (quota.get(pick) ?? 0) > 0) {
         p.role = pick;
         quota.set(pick, (quota.get(pick) ?? 0) - 1);
@@ -217,7 +216,7 @@ export class GameEngine {
       [rest[i], rest[j]] = [rest[j], rest[i]];
     }
     const need = this.players.filter((p) => {
-      const pick = this.rolePicks.get(p.userId);
+      const pick = this.rolePicks.get(p.userId)?.role;
       return !pick || p.role !== pick;
     });
     need.forEach((p, i) => {
@@ -227,45 +226,68 @@ export class GameEngine {
   }
 
   /**
-   * Lobby'da karta tanlash (faqat roleDraft rejimida).
-   * roleId null = tanlovni bekor qilish.
+   * Blind draft: o'yinchi yopiq pozitsiyani tanlaydi, server qolgan
+   * kartalardan random rol beradi (rol faqat egasiga ko'rinadi).
+   * slot null = tanlovni bekor qilish. owned — marketdan olingan rollar.
    */
-  pickRole(userId: number, roleId: RoleId | null): { ok: boolean; error?: string } {
+  pickRole(
+    userId: number,
+    slot: number | null,
+    owned: RoleId[] = [],
+  ): { ok: boolean; error?: string } {
     if (!this.settings.roleDraft) return { ok: false, error: 'Tanlash o‘chiq' };
     if (this.phase !== 'LOBBY') return { ok: false, error: 'Juda kech' };
     const p = this.players.find((x) => x.userId === userId);
     if (!p || p.isBot) return { ok: false, error: 'Xonada emassiz' };
-    if (roleId === null) {
+    if (slot === null) {
       this.rolePicks.delete(userId);
       this.hooks.onPhaseChanged();
       return { ok: true };
     }
-    const pool = buildRolePlan(this.settings, this.settings.playerCount);
-    const quota = pool.filter((r) => r === roleId).length;
-    if (quota === 0) return { ok: false, error: 'Bunday karta yo‘q' };
-    let used = 0;
-    for (const [uid, r] of this.rolePicks) {
-      if (uid !== userId && r === roleId) used++;
+    if (!Number.isInteger(slot) || slot < 0 || slot >= this.settings.playerCount) {
+      return { ok: false, error: 'Noto‘g‘ri karta' };
     }
-    if (used >= quota) return { ok: false, error: 'Karta allaqachon olingan' };
-    this.rolePicks.set(userId, roleId);
+    const cur = this.rolePicks.get(userId);
+    if (cur && cur.slot === slot) return { ok: true };
+    for (const [uid, v] of this.rolePicks) {
+      if (uid !== userId && v.slot === slot) return { ok: false, error: 'Karta band' };
+    }
+    // qolgan kartalar (o'zimnikidan tashqari band qilinganlar chiqariladi)
+    const pool = buildRolePlan(this.settings, this.settings.playerCount);
+    const taken = new Map<RoleId, number>();
+    for (const [uid, v] of this.rolePicks) {
+      if (uid !== userId) taken.set(v.role, (taken.get(v.role) ?? 0) + 1);
+    }
+    const remaining: RoleId[] = [];
+    const seen = new Map<RoleId, number>();
+    for (const r of pool) {
+      const n = (seen.get(r) ?? 0) + 1;
+      seen.set(r, n);
+      if (n > (taken.get(r) ?? 0)) remaining.push(r);
+    }
+    // premium rollar — faqat marketdan olganlarga (bo'lmasa yashirincha chiqariladi)
+    let allowed = remaining.filter((r) => !isPremiumRole(r) || owned.includes(r));
+    if (allowed.length === 0) allowed = remaining;
+    if (allowed.length === 0) return { ok: false, error: 'Kartalar tugadi' };
+    const role = allowed[Math.floor(Math.random() * allowed.length)];
+    this.rolePicks.set(userId, { role, slot });
     this.hooks.onPhaseChanged();
     return { ok: true };
   }
 
-  /** Efirga: kim tanlagani (qaysi karta — sir, har kim o'zinikini you.pick'da oladi) */
-  getRolePicks(): { userId: number; displayName: string }[] {
-    const out: { userId: number; displayName: string }[] = [];
-    for (const [uid] of this.rolePicks) {
+  /** Efirga: kim qaysi pozitsiyani olgani (rol — sir, har kim o'zinikini you.slot'da oladi) */
+  getRolePicks(): { userId: number; displayName: string; slot: number }[] {
+    const out: { userId: number; displayName: string; slot: number }[] = [];
+    for (const [uid, v] of this.rolePicks) {
       const p = this.players.find((x) => x.userId === uid);
-      if (p) out.push({ userId: uid, displayName: p.displayName });
+      if (p) out.push({ userId: uid, displayName: p.displayName, slot: v.slot });
     }
     return out;
   }
 
-  /** Faqat o'z tanlovi — room:state dagi `you` orqali yuboriladi */
-  getPick(userId: number): RoleId | null {
-    return this.rolePicks.get(userId) ?? null;
+  /** Faqat o'z tanlovining pozitsiyasi — room:state dagi `you` orqali yuboriladi */
+  getPickSlot(userId: number): number | null {
+    return this.rolePicks.get(userId)?.slot ?? null;
   }
 
   // ---------- NIGHT ----------
@@ -922,7 +944,5 @@ export function buildRolePlan(settings: RoomSettings, count: number): RoleId[] {
   if (settings.bodyguardEnabled) roles.push('BODYGUARD');
   while (roles.length < count) roles.push('CITIZEN');
   if (roles.length > count) return roles.slice(0, count);
-  void DEFAULT_SETTINGS;
-  void startingTeamCounts;
   return roles;
 }
