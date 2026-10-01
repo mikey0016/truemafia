@@ -41,6 +41,19 @@ export function createApiRouter(deps: ApiDeps): Router {
     });
   });
 
+  // Maxsus nick o'rnatish (Settings'dagi "NIK O'RNATISH" bo'limi)
+  router.post('/profile/nick', (req, res) => {
+    const uid = req.tgUser!.userId;
+    const raw = typeof req.body?.nick === 'string' ? req.body.nick : '';
+    void deps.users.setNickname(uid, raw).then((r) => {
+      if (!r.ok) {
+        res.status(400).json({ error: r.error });
+        return;
+      }
+      ok(res, { displayName: r.displayName });
+    });
+  });
+
   router.get('/profile/:userId', (req, res) => {
     const uid = parseInt(req.params.userId, 10);
     if (!Number.isFinite(uid)) {

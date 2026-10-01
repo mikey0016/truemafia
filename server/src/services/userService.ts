@@ -55,18 +55,37 @@ export class UserService {
     const now = Date.now();
     // NOTE: pass `now` twice — the Db layer maps $n -> ? positionally, so
     // repeating $5 would shift the placeholder indices and NULL out created_at.
+    // display_name faqat foydalanuvchi maxsus nick olmagan bo'lsa yangilanadi.
     await this.db.run(
       `INSERT INTO users (user_id, username, display_name, photo_url, last_seen_at, created_at)
        VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (user_id) DO UPDATE SET
          username = EXCLUDED.username,
-         display_name = EXCLUDED.display_name,
+         display_name = CASE WHEN users.nick_custom = 1 THEN users.display_name ELSE EXCLUDED.display_name END,
          photo_url = COALESCE(EXCLUDED.photo_url, users.photo_url),
          last_seen_at = EXCLUDED.last_seen_at`,
       [u.userId, u.username, u.displayName, u.photoUrl ?? null, now, now],
     );
     const row = await this.db.get<UserRow>('SELECT * FROM users WHERE user_id = $1', [u.userId]);
     return row as UserRow;
+  }
+
+  /**
+   * Maxsus nick o'rnatish (2-24 belgi). display_name yangilanadi va
+   * nick_custom=1 bo'ladi — Telegram ismi endi ustiga yozilmaydi.
+   */
+  async setNickname(userId: number, rawName: string): Promise<{ ok: boolean; error?: string; displayName?: string }> {
+    const name = rawName.replace(/\s+/g, ' ').trim().replace(/[<>&"'\u0000-\u001f]/g, '');
+    if (name.length < 2 || name.length > 24) {
+      return { ok: false, error: 'Nick 2-24 belgi bo‘lishi kerak' };
+    }
+    const u = await this.getById(userId);
+    if (!u) return { ok: false, error: 'Foydalanuvchi topilmadi' };
+    await this.db.run(
+      'UPDATE users SET display_name=$1, nick_custom=1 WHERE user_id=$2',
+      [name, userId],
+    );
+    return { ok: true, displayName: name };
   }
 
   async getById(userId: number): Promise<UserRow | undefined> {
@@ -123,6 +142,7 @@ export class UserService {
     return {
       userId: num(u.user_id),
       username: u.username,
+      displayName: u.display_name,
       photoUrl: u.photo_url ?? undefined,
       level: num(u.level),
       xp: num(u.xp),

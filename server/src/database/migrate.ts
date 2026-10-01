@@ -201,6 +201,12 @@ const MIGRATIONS: { id: number; name: string; sql: string[]; tolerateFailure?: b
     tolerateFailure: true,
     sql: [`ALTER TABLE users ADD COLUMN active_title TEXT`],
   },
+  {
+    id: 14,
+    name: 'users_nick_custom',
+    tolerateFailure: true,
+    sql: [`ALTER TABLE users ADD COLUMN nick_custom INTEGER NOT NULL DEFAULT 0`],
+  },
 ];
 
 export async function migrate(db: Db): Promise<void> {

@@ -1,15 +1,37 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { setSoundEnabled, setVibrationEnabled, loadSoundPrefs } from '../services/sound';
 import { getInitData } from '../services/telegram';
 import { getBackendUrl, setBackendUrl } from '../config';
 import { getSocket } from '../services/socket';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { useGameStore } from '../store/gameStore';
 
 export function Settings() {
   const [prefs, setPrefs] = useState(loadSoundPrefs());
   const [backend, setBackend] = useState(getBackendUrl());
   const [saved, setSaved] = useState(false);
   const connected = getSocket().connected;
+
+  const { profile, profileLoading, loadProfile, setNickname } = useGameStore();
+  const [nick, setNick] = useState('');
+  const [nickSaving, setNickSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile === null && !profileLoading) void loadProfile();
+  }, [loadProfile, profile, profileLoading]);
+
+  useEffect(() => {
+    // profil kelganda inputga hozirgi display_name'ni qo'yamiz (faqat bo'sh bo'lsa)
+    if (profile && nick === '') setNick(profile.displayName || profile.username || '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
+
+  const saveNick = async () => {
+    if (nickSaving) return;
+    setNickSaving(true);
+    await setNickname(nick);
+    setNickSaving(false);
+  };
 
   const saveBackend = () => {
     setBackendUrl(backend);
@@ -42,6 +64,28 @@ export function Settings() {
             }}
           />
         </div>
+      </div>
+
+      <div className="card">
+        <div className="label" style={{ marginBottom: 6 }}>NIK O‘RNATISH</div>
+        <div className="dim" style={{ fontSize: '0.8rem', marginBottom: 8 }}>
+          O‘yinda ko‘rinadigan ism. 2–24 belgi. Saqlangach Telegram ismingiz ustiga yozilmaydi.
+        </div>
+        <input
+          value={nick}
+          onChange={(e) => setNick(e.target.value.slice(0, 24))}
+          placeholder="Nick..."
+          maxLength={24}
+          style={{ fontSize: '0.9rem' }}
+        />
+        <button
+          className="btn btn-primary btn-block"
+          style={{ marginTop: 10 }}
+          disabled={nickSaving || nick.trim().length < 2}
+          onClick={() => void saveNick()}
+        >
+          {nickSaving ? 'SAQLANMOQDA…' : 'NICK SAQLASH'}
+        </button>
       </div>
 
       <div className="card">

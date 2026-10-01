@@ -168,6 +168,9 @@ interface GameState {
   equipItem: (itemId: string) => Promise<boolean>;
   unequipItem: (kind: 'frame' | 'title') => Promise<boolean>;
 
+  // maxsus nick (Settings)
+  setNickname: (nick: string) => Promise<boolean>;
+
   // host: xona sozlamasini o'zgartirish (lobbyda)
   updateRoomSettings: (patch: Partial<RoomSettings>) => void;
 
@@ -257,6 +260,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         profile: {
           userId: 0,
           username: name,
+          displayName: name,
           photoUrl: undefined,
           level: 1,
           xp: 0,
@@ -419,6 +423,17 @@ export const useGameStore = create<GameState>((set, get) => ({
   unequipItem: async (kind) => {
     const { ok } = await apiPost('/api/shop/unequip', { kind });
     if (!ok) return false;
+    void get().loadProfile();
+    return true;
+  },
+
+  setNickname: async (nick) => {
+    const { ok, json } = await apiPost('/api/profile/nick', { nick });
+    if (!ok) {
+      get().pushToast('error', (json.error as string) ?? 'Saqlanmadi');
+      return false;
+    }
+    get().pushToast('success', 'Nick saqlandi!');
     void get().loadProfile();
     return true;
   },

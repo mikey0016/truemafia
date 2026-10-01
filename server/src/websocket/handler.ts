@@ -168,6 +168,8 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
               return;
             }
             title = row?.active_title ?? undefined;
+            // Maxsus nick o'rnatilgan bo'lsa — o'yinda DB'dagi nom ko'rinadi
+            if (row?.display_name) u = { ...u, displayName: row.display_name };
           } catch {
             // db xatosi bloklamasin
           }

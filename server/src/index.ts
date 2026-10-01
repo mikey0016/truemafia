@@ -51,7 +51,14 @@ async function main(): Promise<void> {
   const rooms = new RoomManager(db);
   rooms.startCleanupLoop();
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true, time: Date.now(), version: 'v2.0.0' }));
+  app.get('/api/health', (_req, res) =>
+    res.json({
+      ok: true,
+      time: Date.now(),
+      version: 'v2.0.1',
+      adminConfigured: (process.env.ADMIN_IDS || '').trim().length > 0,
+    }),
+  );
 
   // Ochiq xonalar — auth'siz (Find a game ro'yxati uchun).
   // Auth talab qilinadigan router'dan OLDIN turishi shart.

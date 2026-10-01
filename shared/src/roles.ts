@@ -236,6 +236,8 @@ export interface GameSnapshot {
 export interface ProfileStats {
   userId: number;
   username: string;
+  /** Ko‘rinadigan ism — maxsus nick o‘rnatilgan bo‘lsa shu ko‘rinadi. */
+  displayName: string;
   photoUrl?: string;
   level: number;
   xp: number;
