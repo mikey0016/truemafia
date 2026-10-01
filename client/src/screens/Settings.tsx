@@ -40,7 +40,7 @@ export function Settings() {
       </div>
 
       <div className="spacer" />
-      <div className="ghost-chat-note">TRUE MAFIA · v1.0.0</div>
+      <div className="ghost-chat-note">TRUE MAFIA · v1.0.1</div>
     </div>
   );
 }
