@@ -105,8 +105,7 @@ export function Home() {
       </div>
 
       {/* menu list */}
-      <div className="spacer" />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="spacer" />      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {(
           [
             ['PROFILE', 'profile', '👤'],
@@ -133,6 +132,7 @@ export function Home() {
           </button>
         ))}
       </div>
+      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.0.3</div>
     </div>
   );
 }
