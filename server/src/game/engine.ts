@@ -249,13 +249,19 @@ export class GameEngine {
     return { ok: true };
   }
 
-  getRolePicks(): { userId: number; displayName: string; roleId: RoleId }[] {
-    const out: { userId: number; displayName: string; roleId: RoleId }[] = [];
-    for (const [uid, roleId] of this.rolePicks) {
+  /** Efirga: kim tanlagani (qaysi karta — sir, har kim o'zinikini you.pick'da oladi) */
+  getRolePicks(): { userId: number; displayName: string }[] {
+    const out: { userId: number; displayName: string }[] = [];
+    for (const [uid] of this.rolePicks) {
       const p = this.players.find((x) => x.userId === uid);
-      if (p) out.push({ userId: uid, displayName: p.displayName, roleId });
+      if (p) out.push({ userId: uid, displayName: p.displayName });
     }
     return out;
+  }
+
+  /** Faqat o'z tanlovi — room:state dagi `you` orqali yuboriladi */
+  getPick(userId: number): RoleId | null {
+    return this.rolePicks.get(userId) ?? null;
   }
 
   // ---------- NIGHT ----------

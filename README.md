@@ -89,7 +89,7 @@ Botda `/start` bossangiz — bot haqida ma'lumot (rollar, fazalar) + 🎮 O'ynas
 - **Rollar**: Mafiya (tunda o'ldiradi), Detektiv (tekshiradi), Doktor (davolaydi), Oddiy fuqarolar, Mustaqil rollar
 - **Fazalar**: LOBBY → NIGHT → NIGHT_RESULT → DAY → DISCUSSION → VOTING → VOTE_RESULT → GAME_OVER
 - **🤖 Botlar**: Create Room'da BOTS sonini tanlang — lobby botlar bilan to'ladi, o'yin to'liq o'tadi. Botli o'yinlar reytingga yozilmaydi (casual)
-- **🎴 Role draft**: Create Room'da yoqilsa, random o'rniga har kim lobby'da o'z kartasini tanlaydi (kim birinchi — o'shaniki). Qolgan kartalar startda random tarqatiladi
+- **🎴 Role draft**: Create Room'da yoqilsa, random o'rniga har kim lobby'da o'z kartasini tanlaydi (kim birinchi — o'shaniki). **Tanlov yashirin**: kim nima olgani ko'rinmaydi, har kim faqat o'z kartasini ko'radi. Qolgan kartalar startda random tarqatiladi
 
 ## Skriptlar
 

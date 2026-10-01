@@ -12,7 +12,7 @@ const ROLE_ICONS: Record<string, string> = {
 };
 
 export function Lobby() {
-  const { roomCode, roomPlayers, roomSettings, rolePicks, tgUserId, isHost, ready, pickRole } = useGameStore();
+  const { roomCode, roomPlayers, roomSettings, rolePicks, myPick, isHost, ready, pickRole } = useGameStore();
   const pushToast = useGameStore((s) => s.pushToast);
   const navigate = useGameStore((s) => s.navigate);
   const [copied, setCopied] = useState(false);
@@ -123,8 +123,8 @@ export function Lobby() {
       {roomSettings?.roleDraft && (
         <RoleDraftCard
           settings={roomSettings}
-          picks={rolePicks}
-          myId={tgUserId}
+          pickedCount={rolePicks.length}
+          myPick={myPick}
           onPick={(r) => {
             haptic('light');
             playSound('click');
@@ -179,63 +179,56 @@ export function Lobby() {
 
 function RoleDraftCard({
   settings,
-  picks,
-  myId,
+  pickedCount,
+  myPick,
   onPick,
 }: {
   settings: NonNullable<ReturnType<typeof useGameStore.getState>['roomSettings']>;
-  picks: { userId: number; displayName: string; roleId: RoleId }[];
-  myId: number | null;
+  pickedCount: number;
+  myPick: RoleId | null;
   onPick: (roleId: RoleId | null) => void;
 }) {
   const pool = suggestedRolePlan(settings.playerCount, settings.mafiaCount, settings);
-  const quota = new Map<RoleId, number>();
-  for (const r of pool) quota.set(r, (quota.get(r) ?? 0) + 1);
-  const takenBy = new Map<RoleId, string[]>();
-  for (const p of picks) {
-    const arr = takenBy.get(p.roleId) ?? [];
-    arr.push(p.displayName);
-    takenBy.set(p.roleId, arr);
-  }
-  const myPick = picks.find((p) => p.userId === myId)?.roleId ?? null;
-  const order = [...quota.keys()];
+  const counts = new Map<RoleId, number>();
+  for (const r of pool) counts.set(r, (counts.get(r) ?? 0) + 1);
+  const order = [...counts.keys()];
 
   return (
     <div className="card">
       <div className="row-between" style={{ marginBottom: 4 }}>
-        <span className="label">ROLE DRAFT — CHOOSE YOUR CARD</span>
+        <span className="label">ROLE DRAFT — YOPPIQ TANLOV 🕵️</span>
         {myPick && (
           <button className="btn" style={{ height: 30, padding: '0 10px', fontSize: '0.7rem' }} onClick={() => onPick(null)}>
             CLEAR
           </button>
         )}
       </div>
+      <div className="dim" style={{ fontSize: '0.78rem', marginBottom: 4 }}>
+        {myPick
+          ? `Sizning kartangiz: ${ROLES[myPick].name} (boshqalarga ko'rinmaydi 🤫)`
+          : 'Karta tanlang — kim nima olgani sir saqlanadi.'}
+      </div>
       <div className="dim" style={{ fontSize: '0.78rem', marginBottom: 10 }}>
-        {myPick ? `Your card: ${ROLES[myPick].name}` : 'Tap a card to claim it. Leftovers are dealt randomly.'}
+        Tanladi: {pickedCount} kishi
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {order.map((role) => {
           const def = ROLES[role];
-          const total = quota.get(role) ?? 0;
-          const taken = takenBy.get(role) ?? [];
-          const left = total - taken.length;
           const mine = myPick === role;
           return (
             <button
               key={role}
               className="list-row card-press"
-              style={{ borderColor: mine ? def.color : undefined, opacity: left <= 0 && !mine ? 0.55 : 1 }}
+              style={{ borderColor: mine ? def.color : undefined }}
               onClick={() => onPick(mine ? null : role)}
             >
               <span style={{ fontSize: '1.4rem' }}>{ROLE_ICONS[def.icon] ?? '🎭'}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 800, fontSize: '0.9rem', color: def.color }}>{def.name.toUpperCase()}</div>
-                <div className="dim" style={{ fontSize: '0.75rem' }}>
-                  {taken.length > 0 ? taken.join(', ') : def.tagline}
-                </div>
+                <div className="dim" style={{ fontSize: '0.75rem' }}>{def.tagline}</div>
               </div>
               <span className="badge" style={mine ? { borderColor: def.color, color: def.color } : undefined}>
-                {mine ? 'YOURS' : left > 0 ? `×${left}` : 'TAKEN'}
+                {mine ? 'SIZNIKI' : `×${counts.get(role)}`}
               </span>
             </button>
           );

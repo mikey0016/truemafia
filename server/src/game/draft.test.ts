@@ -57,6 +57,10 @@ async function main(): Promise<void> {
   assert(!e.pickRole(99, 'DOCTOR').ok, 'begona rad etiladi');
   assert(!e.pickRole(4, 'NOPE' as never).ok, 'notogri rol rad etiladi');
   assert(e.getRolePicks().length === 3, '3 ta pick');
+  // yashirin draft: efirda roleId yo'q, har kim o'zinikini alohida oladi
+  assert(!('roleId' in e.getRolePicks()[0]), 'efirda roleId yoq');
+  assert(e.getPick(1) === 'MAFIA', 'oz pickim korinadi');
+  assert(e.getPick(4) === null, 'tanlamaganning picki null');
 
   // chiqqanining kartasi bo'shaydi (DON)
   e.removePlayer(2);

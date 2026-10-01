@@ -53,10 +53,10 @@ export interface ServerToClientEvents {
       players: PublicPlayer[];
       settings: RoomSettings;
       hostId: number;
-      /** karta tanlash rejimidagi band kartalar (ochiq draft) */
-      rolePicks: { userId: number; displayName: string; roleId: RoleId }[];
+      /** karta tanlash rejimi: KIM tanlagani (qaysi karta — sir) */
+      rolePicks: { userId: number; displayName: string }[];
     };
-    you: { isHost: boolean; ready: boolean };
+    you: { isHost: boolean; ready: boolean; pick: RoleId | null };
   }) => void;
   'room:error': (payload: { code: string; message: string }) => void;
   'game:snapshot': (payload: GameSnapshot) => void;

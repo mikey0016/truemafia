@@ -435,6 +435,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         you: {
           isHost: e.hostId === p.userId,
           ready: (e as unknown as { ready: Set<number> }).ready.has(p.userId),
+          pick: e.getPick(p.userId),
         },
       });
     }
