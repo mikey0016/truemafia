@@ -40,7 +40,15 @@ async function main(): Promise<void> {
   app.use(express.json({ limit: '100kb' }));
 
   const clientDist = path.resolve(__dirname, '../../client/dist');
-  app.use(express.static(clientDist));
+  app.use(express.static(clientDist, { index: false }));
+
+  // index.html hech qachon cache qilinmasin — yangi deploy darhol ko'rinsin
+  // (hashed asset fayllari Express default bilan 1 yil cache qilinadi).
+  app.get(['/index.html', '/'], (_req, res, next) => {
+    if (!fs.existsSync(path.join(clientDist, 'index.html'))) return next();
+    res.set('Cache-Control', 'no-store, must-revalidate');
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
 
   app.use('/api/auth', authMiddleware, (req, res) => {
     res.json({

@@ -5,6 +5,7 @@
  * - BOT_TOKEN bo'lmasa: jim turadi (Mini App auth'siz local dev'da kerak emas).
  * - WEBAPP_URL (yoki PUBLIC_URL) bo'lsa: "🎮 O'ynash" tugmasi web_app sifatida chiqadi.
  */
+import { adminIdList } from '../auth/admin.js';
 
 interface BotConfig {
   webAppUrl: string;
@@ -15,12 +16,12 @@ interface TgUpdate {
   message?: {
     message_id: number;
     chat: { id: number; type: string };
-    from?: { first_name?: string; username?: string };
+    from?: { id?: number; first_name?: string; username?: string };
     text?: string;
   };
   callback_query?: {
     id: string;
-    from: { first_name?: string; username?: string };
+    from: { id?: number; first_name?: string; username?: string };
     message?: { chat: { id: number } };
     data?: string;
   };
@@ -61,11 +62,21 @@ Maslahat: rolni erta oshkor qilmang, Detektiv topilmalari o'yinni buradi!`;
 const HELP_TEXT = `🆘 <b>Yordam</b>
 
 /start — bot haqida
-/play — Mini App'ni ochish
+/play — Mini App'ni ochish (doim yangi versiya)
+/id — sening Telegram ID va admin holati
 /rules — o'yin qoidalari
 /help — shu xabar
 
 Muammo bo'lsa: avval Telegram'ni yangilang, keyin /play orqali qayta kiring.`;
+
+/**
+ * Telegram webview URL bo'yicha cache qiladi — har ochishda unikal param
+ * qo'shsak, webview doim eng yangi index.html + bundle'ni yuklaydi.
+ */
+function withCacheBust(url: string): string {
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}v=${Date.now().toString(36)}`;
+}
 
 export function resolveWebAppUrl(): string {
   const url = (
@@ -96,8 +107,8 @@ async function api<T>(token: string, method: string, body: Record<string, unknow
 async function sendInfo(token: string, chatId: number, webAppUrl: string): Promise<void> {
   const useWebApp = /^https:\/\//i.test(webAppUrl);
   const playButton = useWebApp
-    ? { text: "🎮 O'ynash", web_app: { url: webAppUrl } }
-    : { text: "🎮 O'ynash", url: webAppUrl };
+    ? { text: "🎮 O'ynash", web_app: { url: withCacheBust(webAppUrl) } }
+    : { text: "🎮 O'ynash", url: withCacheBust(webAppUrl) };
   await api(token, 'sendMessage', {
     chat_id: chatId,
     text: START_TEXT,
@@ -146,9 +157,19 @@ async function handleUpdate(token: string, cfg: BotConfig, u: TgUpdate): Promise
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
-            [useWebApp ? { text: "▶️ Boshlash", web_app: { url: cfg.webAppUrl } } : { text: '▶️ Boshlash', url: cfg.webAppUrl }],
+            [useWebApp ? { text: "▶️ Boshlash", web_app: { url: withCacheBust(cfg.webAppUrl) } } : { text: '▶️ Boshlash', url: withCacheBust(cfg.webAppUrl) }],
           ],
         },
+      });
+      break;
+    }
+    case '/id': {
+      const tid = msg.from?.id;
+      const isAdmin = typeof tid === 'number' && adminIdList().includes(tid);
+      await api(token, 'sendMessage', {
+        chat_id: chatId,
+        parse_mode: 'HTML',
+        text: `🆔 <b>Telegram ID:</b> <code>${tid ?? 'nomalum'}</code>\n👮 <b>Admin:</b> ${isAdmin ? 'HA ✅' : 'YOQ ❌'}\n\nAdmin bolish uchun shu ID ADMIN_IDS royxatida bolishi kerak.`,
       });
       break;
     }
@@ -181,6 +202,7 @@ export function startTelegramBot(): () => void {
     commands: [
       { command: 'start', description: "Bot haqida + o'yinni ochish" },
       { command: 'play', description: "Mini App'ni ochish" },
+      { command: 'id', description: 'Telegram ID va admin holati' },
       { command: 'rules', description: "O'yin qoidalari" },
       { command: 'help', description: 'Yordam' },
     ],
