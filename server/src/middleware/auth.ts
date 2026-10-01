@@ -1,5 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
-import { parseInitDataInsecure, validateInitData, type TelegramAuthUser } from '../auth/telegram.js';
+import {
+  guestUser,
+  logAuthFailure,
+  parseInitDataInsecure,
+  validateInitDataDetailed,
+  type TelegramAuthUser,
+} from '../auth/telegram.js';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -18,7 +24,7 @@ function parseGuestId(raw: unknown): number | null {
   const s = Array.isArray(raw) ? raw[0] : raw;
   if (typeof s !== 'string' || !/^-\d{6,12}$/.test(s.trim())) return null;
   const n = parseInt(s.trim(), 10);
-  return Number.isSafeInteger(n) && n < 0 ? n : null;
+  return Number.isSafeInteger(n) ? n : null;
 }
 
 function parseGuestName(raw: unknown): string {
@@ -31,10 +37,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   const botToken = process.env.BOT_TOKEN || '';
   const header = req.headers['x-telegram-init-data'] || '';
   const initData = Array.isArray(header) ? header[0] : header;
-  const user = botToken ? validateInitData(initData, botToken) : null;
+  const result = botToken ? validateInitDataDetailed(initData, botToken) : { user: null };
 
-  if (user) {
-    req.tgUser = user;
+  if (result.user) {
+    req.tgUser = result.user;
   } else if (DEV_SKIP()) {
     // dev fallback: parse without verification so local testing works
     req.tgUser = parseInitDataInsecure(initData) || {
@@ -44,18 +50,14 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
       authDate: Date.now(),
     };
   } else {
-    // Mehmon rejimi: Telegram'siz brauzerda o'ynash uchun (id manfiy bo'ladi).
+    // Telegram imzosi yaroqsiz — mehmon rejimiga tushirish (o'yin davom etsin).
     const guestId = parseGuestId(req.headers['x-guest-id']);
     if (guestId !== null) {
       const guestName = parseGuestName(req.headers['x-guest-name']) || `Guest${-guestId % 10000}`;
-      req.tgUser = {
-        userId: guestId,
-        username: guestName,
-        displayName: guestName,
-        authDate: Date.now(),
-        isGuest: true,
-      };
+      req.tgUser = guestUser(guestId, guestName);
+      if (result.failure) logAuthFailure('REST', `${result.failure} -> guest`);
     } else {
+      logAuthFailure('REST', result.failure || 'no guest id');
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }

@@ -53,7 +53,8 @@ npm run typecheck    # tsc -b shared server client
 |-------------|----------|--------|
 | `DATABASE_URL` | ✅ | SQLite fayl yo'li (masalan `./data/true-mafia.sqlite`) **yoki** `DB_CLIENT=postgres` bo'lsa Postgres connection string |
 | `DB_CLIENT` | — | `postgres` bo'lsa PostgreSQL ishlatiladi, aks holda SQLite |
-| `BOT_TOKEN` | ✅ (prod) | Telegram bot tokeni — `initData` imzosini tekshirish + `/start` javobi uchun |
+| `BOT_TOKEN` | ✅ (prod) | Telegram bot tokeni — `initData` imzosini tekshirish + `/start` javobi uchun. **MUHIM:** Mini App ochilgan bot bilan aynan bir xil token bo'lishi shart, aks holda auth `bad signature` beradi |
+| `TELEGRAM_AUTH_MAX_AGE_HOURS` | — | initData yashash muddati (soat). Standart: 24. Telegram soati orqada qolsa bu qiymatni oshiring |
 | `WEBAPP_URL` | — | Mini App URL (`/start` dagi 🎮 tugma uchun). Standart: `https://mikey0016.github.io/truemafia/` |
 | `ADMIN_IDS` | — | Vergul bilan ajratilgan admin Telegram ID'lari |
 | `PORT` | — | Standart: `3000` |

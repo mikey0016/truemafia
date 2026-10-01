@@ -2,7 +2,12 @@ import type { Server as HttpServer } from 'node:http';
 import { Server as IOServer, type Socket } from 'socket.io';
 import type { ChatMessage, GameSnapshot, RoomSettings, Team } from '@truemafia/shared';
 import { ACHIEVEMENTS, CHAT_MAX_LEN, RATE_LIMITS } from '@truemafia/shared';
-import { parseInitDataInsecure, validateInitData } from '../auth/telegram.js';
+import {
+  guestUser,
+  logAuthFailure,
+  parseInitDataInsecure,
+  validateInitDataDetailed,
+} from '../auth/telegram.js';
 import type { RoomManager } from '../game/roomManager.js';
 import { BotController } from '../game/bots.js';
 import type { GameEngine } from '../game/engine.js';
@@ -112,12 +117,11 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       ) => {
         const initData = typeof payload === 'string' ? payload : payload?.initData || '';
         const botToken = process.env.BOT_TOKEN || '';
-        let u = botToken ? validateInitData(initData, botToken) : null;
+        const result = botToken ? validateInitDataDetailed(initData, botToken) : { user: null };
+        let u = result.user;
         let failReason = '';
         if (!u) {
-          if (!botToken) failReason = 'no server token';
-          else if (!initData) failReason = 'empty initData';
-          else failReason = 'bad signature';
+          failReason = result.failure || (botToken ? 'unknown' : 'no server token');
         }
         if (!u && process.env.DEV_SKIP_AUTH === '1' && process.env.NODE_ENV !== 'production') {
           u = parseInitDataInsecure(initData) || {
@@ -132,12 +136,14 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
           const gid = payload.guestId;
           if (typeof gid === 'number' && Number.isSafeInteger(gid) && gid < 0 && gid > -1e12) {
             const gname = String(payload.guestName || '').slice(0, 24) || `Guest${-gid % 10000}`;
-            u = { userId: gid, username: gname, displayName: gname, authDate: Date.now(), isGuest: true };
+            u = guestUser(gid, gname);
+            if (failReason) logAuthFailure('WS', `${failReason} -> guest`);
           } else {
             failReason += (failReason ? '+' : '') + 'no guest id';
           }
         }
         if (!u) {
+          logAuthFailure('WS', failReason || 'unknown');
           ack?.({ ok: false, error: `Invalid auth (${failReason || 'unknown'})` });
           return;
         }

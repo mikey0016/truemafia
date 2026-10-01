@@ -26,9 +26,12 @@ let lastAuthOk: boolean | null = null;
 function sendAuth(): void {
   if (!socket) return;
   const me = getIdentity();
+  // guestId faqat manfiy bo'lganda yuboriladi — Telegram user id (musbat)
+  // guest sifatida yuborilsa server rad etadi.
+  const guestId = me.id !== null && me.id < 0 ? me.id : getGuestId();
   socket.emit(
     'auth',
-    { initData: getInitData(), guestId: me.id ?? getGuestId(), guestName: me.name },
+    { initData: getInitData(), guestId, guestName: me.name },
     (res) => {
       lastAuthOk = res.ok;
       if (!res.ok) {
