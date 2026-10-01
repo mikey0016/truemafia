@@ -9,20 +9,20 @@ const BOT_NAMES = [
 const BOT_USER_ID_BASE = 900000000; // synthetic ids, can't collide with Telegram ids
 
 const CHAT_LINES_DAY = [
-  'I have a bad feeling about this round.',
-  'Someone here is lying.',
-  'I was quiet last night, watching votes.',
-  'Why did you defend them so hard?',
-  'Trust me, I am vanilla town.',
-  'The doctor saved someone, obviously.',
-  'Let us think before we vote.',
-  'That vote looked coordinated.',
+  'Bu raundda nimadir shubhali.',
+  'Oramizda kimdir yolg‘on gapiryapti.',
+  'Kecha jim kuzatdim, ovozlarni ko‘rdim.',
+  'Nega uni bunchalik himoya qilding?',
+  'Ishoning, men oddiy fuqaroman.',
+  'Doktor kimnidir qutqargan ko‘rinadi.',
+  'Ovoz berishdan oldin o‘ylab olaylik.',
+  'O‘sha ovoz kelishilgandek ko‘rindi.',
 ];
 const CHAT_LINES_MAFIA = [
-  'Vote together, do not split.',
-  'I will follow your call.',
-  'Skip the detective claim, too risky.',
-  'Push on the loud one.',
+  'Birga ovoz beramiz, bo‘linmang.',
+  'Sening gapingga qo‘shilaman.',
+  'Detektiv da’vosi xavfli, chetlab o‘tamiz.',
+  'Shovqinlisiga bosim qilamiz.',
 ];
 
 export interface BotPersona {

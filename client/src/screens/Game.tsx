@@ -54,7 +54,7 @@ export function Game() {
 
       {phase !== 'GAME_OVER' && (
         <button className="btn btn-ghost" style={{ color: '#ff6b6b', padding: '6px 14px', alignSelf: 'flex-end' }} onClick={leaveGame}>
-          LEAVE
+          CHIQISH
         </button>
       )}
 
@@ -88,7 +88,7 @@ function Hud({ snapshot, secondsLeft }: { snapshot: NonNullable<ReturnType<typeo
   const phase = snapshot.phase.phase;
   const night = phase === 'NIGHT' || phase === 'NIGHT_RESULT';
   const label =
-    phase === 'ROLE_REVEAL' ? 'REVEAL' : phase.startsWith('NIGHT') ? `NIGHT ${snapshot.phase.round}` : phase === 'GAME_OVER' ? 'FINISHED' : `DAY ${snapshot.phase.round}`;
+    phase === 'ROLE_REVEAL' ? 'ROLLAR' : phase.startsWith('NIGHT') ? `TUN ${snapshot.phase.round}` : phase === 'GAME_OVER' ? 'TUGADI' : `KUN ${snapshot.phase.round}`;
   const alive = snapshot.players.filter((p) => p.alive).length;
   const urgent = secondsLeft > 0 && secondsLeft <= 10 && phase !== 'GAME_OVER';
 
@@ -101,7 +101,7 @@ function Hud({ snapshot, secondsLeft }: { snapshot: NonNullable<ReturnType<typeo
         <span className={`timer mono ${urgent ? 'urgent' : ''}`}>
           {phase === 'GAME_OVER' ? '—' : formatTime(secondsLeft)}
         </span>
-        <span className="badge">ALIVE {alive}</span>
+        <span className="badge">TIRIK {alive}</span>
       </div>
       <style>{`@keyframes hueShift { from { filter: hue-rotate(0); } }`}</style>
     </>
@@ -119,9 +119,9 @@ function formatTime(s: number): string {
 function RoleRevealPrompt() {
   return (
     <div className="card" style={{ textAlign: 'center', padding: 24 }}>
-      <div className="h2">Check your role</div>
+      <div className="h2">Rolingizni tekshiring</div>
       <div className="dim" style={{ marginTop: 6 }}>
-        Tap the card above to reveal your secret identity.
+        Yuqoridagi kartani bosib maxfiy rolingizni oching.
       </div>
     </div>
   );
@@ -141,7 +141,7 @@ function NightPhase({ snapshot, secondsLeft }: { snapshot: GameSnap; secondsLeft
     getSocket().emit('game:action', { targetId: target.userId }, (res) => {
       if (!res.ok) {
         hapticNotify('error');
-        useGameStore.getState().pushToast('error', res.error ?? 'Action failed');
+          useGameStore.getState().pushToast('error', res.error ?? 'Harakat bajarilmadi');
       } else {
         playSound('click');
       }
@@ -158,20 +158,20 @@ function NightPhase({ snapshot, secondsLeft }: { snapshot: GameSnap; secondsLeft
 
   return (
     <>
-      <PhaseBanner title={`NIGHT ${snapshot.phase.round}`} night />
+      <PhaseBanner title={`TUN ${snapshot.phase.round}`} night />
       {canAct ? (
         actionDone ? (
           <div className="saved-banner" style={{ padding: 14 }}>
-            ✔ ACTION TAKEN — WAITING FOR OTHERS
+            ✔ HARAKAT BAJARILDI — BOSHQALAR KUTILMOQDA
           </div>
         ) : (
           <div className="card">
             <div className="row-between">
               <span className="label">
-                {myRole?.actionKind === 'kill' && (isMafiaTeam ? 'SELECT TARGET — ELIMINATE' : 'KILL')}
-                {myRole?.actionKind === 'protect' && 'PROTECT A PLAYER'}
-                {myRole?.actionKind === 'save' && 'GUARD A PLAYER'}
-                {myRole?.actionKind === 'investigate' && 'INVESTIGATE A PLAYER'}
+                {myRole?.actionKind === 'kill' && (isMafiaTeam ? 'NISHONNI TANLANG — YO‘Q QILING' : 'O‘LDIRISH')}
+                {myRole?.actionKind === 'protect' && 'O‘YINCHINI HIMOYA QILING'}
+                {myRole?.actionKind === 'save' && 'O‘YINCHINI QO‘RIQLANG'}
+                {myRole?.actionKind === 'investigate' && 'O‘YINCHINI TEKSHIRING'}
               </span>
               <span className="timer mono" style={{ fontSize: '0.9rem' }}>{formatTime(secondsLeft)}</span>
             </div>
@@ -179,7 +179,7 @@ function NightPhase({ snapshot, secondsLeft }: { snapshot: GameSnap; secondsLeft
         )
       ) : (
         <div className="card" style={{ textAlign: 'center' }}>
-          <div className="dim">{snapshot.you.alive ? 'You sleep peacefully tonight. Close your eyes.' : 'You watch from beyond…'}</div>
+          <div className="dim">{snapshot.you.alive ? 'Bu tun osoyishta uxlang. Ko‘zlaringizni yuming.' : 'Nariqdan kuzatyapsiz…'}</div>
         </div>
       )}
 
@@ -215,18 +215,18 @@ function NightResult({ snapshot }: { snapshot: GameSnap }) {
         <div className="eliminated-banner">
           <div style={{ fontSize: '2rem' }}>🥀</div>
           <div className="h2" style={{ margin: '6px 0' }}>{lastDeath.displayName}</div>
-          <div className="label">WAS ELIMINATED OVERNIGHT</div>
+          <div className="label">TUNDA CHETLATILDI</div>
           {lastDeath.role && (
             <div className="badge badge-red" style={{ marginTop: 8 }}>
-              WAS {ROLES[lastDeath.role].name.toUpperCase()}
+              {ROLES[lastDeath.role].name.toUpperCase()} EDI
             </div>
           )}
         </div>
       ) : (
         <div className="saved-banner">
           <div style={{ fontSize: '2rem' }}>☀️</div>
-          <div className="h2" style={{ margin: '6px 0' }}>NOBODY DIED</div>
-          <div className="label">THE DOCTOR SAVED THE TOWN</div>
+          <div className="h2" style={{ margin: '6px 0' }}>HECH KIM O‘LMADI</div>
+          <div className="label">DOKTOR SHAHARNI QUTQARDI</div>
         </div>
       )}
       <div className="player-grid">
@@ -246,11 +246,11 @@ function DayPhase({ snapshot }: { snapshot: GameSnap }) {
 
   return (
     <>
-      <PhaseBanner title={`DAY ${snapshot.phase.round}`} />
+      <PhaseBanner title={`KUN ${snapshot.phase.round}`} />
       <div className="stat-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-        <div className="stat-box"><div className="v gold">{alive}</div><div className="k">Alive</div></div>
-        <div className="stat-box"><div className="v">{eliminated}</div><div className="k">Eliminated</div></div>
-        <div className="stat-box"><div className="v">{snapshot.phase.round}</div><div className="k">Day</div></div>
+        <div className="stat-box"><div className="v gold">{alive}</div><div className="k">Tirik</div></div>
+        <div className="stat-box"><div className="v">{eliminated}</div><div className="k">Chiqarilgan</div></div>
+        <div className="stat-box"><div className="v">{snapshot.phase.round}</div><div className="k">Kun</div></div>
       </div>
       <Chat snapshot={snapshot} />
     </>
@@ -272,7 +272,7 @@ function VotingPhase({ snapshot, secondsLeft }: { snapshot: GameSnap; secondsLef
       if (!res.ok) {
         hapticNotify('error');
         setPending(null);
-        useGameStore.getState().pushToast('error', res.error ?? 'Vote failed');
+          useGameStore.getState().pushToast('error', res.error ?? 'Ovoz berilmadi');
       } else {
         playSound('vote');
         setPending(null);
@@ -282,13 +282,13 @@ function VotingPhase({ snapshot, secondsLeft }: { snapshot: GameSnap; secondsLef
 
   return (
     <>
-      <PhaseBanner title="WHO IS THE MAFIA?" />
+      <PhaseBanner title="MAFIYA KIM?" />
       {!snapshot.you.alive && (
-        <div className="ghost-chat-note">Dead players cannot vote. Watch the town decide.</div>
+        <div className="ghost-chat-note">O‘lganlar ovoz berolmaydi. Shahar qarorini kuzating.</div>
       )}
       {myVote !== null && (
         <div className="saved-banner" style={{ padding: 12 }}>
-          ✔ VOTE LOCKED — {formatTime(secondsLeft)} REMAINING
+          ✔ OVOZ QULFLANDI — {formatTime(secondsLeft)} QOLDI
         </div>
       )}
       <div className="player-grid">
@@ -322,14 +322,14 @@ function VoteResult({ snapshot }: { snapshot: GameSnap }) {
   return (
     <>
       <div className="card">
-        <div className="label" style={{ marginBottom: 10 }}>VOTING RESULTS</div>
+        <div className="label" style={{ marginBottom: 10 }}>OVOZ NATIJALARI</div>
         {entries.length === 0 ? (
-          <div className="empty-state">No votes were cast.</div>
+          <div className="empty-state">Hech kim ovoz bermadi.</div>
         ) : (
           entries.map(({ player, count }) => (
             <div key={player!.userId} className="row-between" style={{ padding: '8px 0' }}>
               <span style={{ fontWeight: 700 }}>{player!.displayName}</span>
-              <span className="mono gold">{count} vote{count === 1 ? '' : 's'}</span>
+              <span className="mono gold">{count} ovoz</span>
             </div>
           ))
         )}
@@ -338,19 +338,19 @@ function VoteResult({ snapshot }: { snapshot: GameSnap }) {
         <div className="eliminated-banner">
           <div style={{ fontSize: '2rem' }}>⚖️</div>
           <div className="h2" style={{ margin: '6px 0' }}>{eliminated.displayName}</div>
-          <div className="label">ELIMINATED</div>
+          <div className="label">CHETLATILDI</div>
           {eliminated.role ? (
             <div className={`badge ${ROLES[eliminated.role].team === 'MAFIA' ? 'badge-red' : 'badge-green'}`} style={{ marginTop: 8 }}>
               {ROLES[eliminated.role].name.toUpperCase()}
             </div>
           ) : (
-            <div className="badge" style={{ marginTop: 8 }}>ROLE UNKNOWN</div>
+            <div className="badge" style={{ marginTop: 8 }}>ROL NOMA’LUM</div>
           )}
         </div>
       ) : (
         <div className="saved-banner">
-          <div className="h2">NO CONSENSUS</div>
-          <div className="label" style={{ marginTop: 4 }}>NOBODY WAS ELIMINATED</div>
+          <div className="h2">YAKDILLIK YO‘Q</div>
+          <div className="label" style={{ marginTop: 4 }}>HECH KIM CHIQARILMADI</div>
         </div>
       )}
     </>
@@ -376,9 +376,9 @@ function GameOver({ snapshot, onHome }: { snapshot: GameSnap; onHome: () => void
       <div className={won ? 'saved-banner' : 'eliminated-banner'} style={{ padding: 28 }}>
         <div style={{ fontSize: '2.6rem' }}>{won ? '🏆' : '🥀'}</div>
         <div className="h1" style={{ margin: '8px 0' }}>
-          {winner === 'MAFIA' ? 'MAFIA WINS' : winner === 'TOWN' ? 'TOWN WINS' : 'INDEPENDENT WINS'}
+          {winner === 'MAFIA' ? 'MAFIYA YUTDI' : winner === 'TOWN' ? 'SHAHAR YUTDI' : 'MUSTAQIL YUTDI'}
         </div>
-        <div className="label">{won ? 'YOU ARE VICTORIOUS' : 'BETTER LUCK NEXT TIME'}</div>
+        <div className="label">{won ? 'SIZ G‘OLIBSIZ' : 'KEYINGI SAFAR OMAD'}</div>
       </div>
 
       {yourRole && (
@@ -386,21 +386,21 @@ function GameOver({ snapshot, onHome }: { snapshot: GameSnap; onHome: () => void
           <div className="achievement-icon" style={{ fontSize: '1.5rem' }}>
             {ROLE_ICONS[yourRole.icon] ?? '🎭'}
           </div>
-          <div>
-            <div className="label">YOUR ROLE</div>
-            <div className="h2" style={{ color: yourRole.color }}>{yourRole.name}</div>
-          </div>
+            <div>
+              <div className="label">SIZNING ROLINGIZ</div>
+              <div className="h2" style={{ color: yourRole.color }}>{yourRole.name}</div>
+            </div>
         </div>
       )}
 
       <div className="card">
-        <div className="label" style={{ marginBottom: 8 }}>SURVIVED ({survivors.length})</div>
+        <div className="label" style={{ marginBottom: 8 }}>OMON QOLDI ({survivors.length})</div>
         <div className="chip-row" style={{ marginBottom: 12 }}>
           {survivors.map((p) => (
             <span key={p.userId} className="chip">{p.displayName}</span>
           ))}
         </div>
-        <div className="label" style={{ marginBottom: 8 }}>ELIMINATED ({eliminated.length})</div>
+        <div className="label" style={{ marginBottom: 8 }}>CHETLATILDI ({eliminated.length})</div>
         <div className="chip-row">
           {eliminated.map((p) => (
             <span key={p.userId} className="chip" style={{ opacity: 0.55 }}>
@@ -411,8 +411,8 @@ function GameOver({ snapshot, onHome }: { snapshot: GameSnap; onHome: () => void
       </div>
 
       <div className="spacer" />
-      <button className="btn btn-primary btn-block btn-lg" onClick={playAgain}>PLAY AGAIN</button>
-      <button className="btn btn-ghost btn-block" onClick={onHome}>RETURN HOME</button>
+      <button className="btn btn-primary btn-block btn-lg" onClick={playAgain}>YANA O‘YNASH</button>
+      <button className="btn btn-ghost btn-block" onClick={onHome}>BOSH SAHIFA</button>
     </>
   );
 }
@@ -467,11 +467,11 @@ function AchievementPopup() {
     <Overlay>
       <div className="card-strong" style={{ textAlign: 'center', padding: 30, maxWidth: 300 }}>
         <div style={{ fontSize: '2.4rem' }}>🎖️</div>
-        <div className="label gold" style={{ margin: '8px 0 4px' }}>ACHIEVEMENT UNLOCKED</div>
+        <div className="label gold" style={{ margin: '8px 0 4px' }}>YUTUQ OCHILDI</div>
         <div className="h2">{popup.name}</div>
         <div className="dim" style={{ marginTop: 6, fontSize: '0.85rem' }}>{popup.description}</div>
         <button className="btn btn-ghost btn-block" style={{ marginTop: 18 }} onClick={() => useGameStore.setState({ achievementPopup: null })}>
-          NICE
+          ZO‘R
         </button>
       </div>
     </Overlay>

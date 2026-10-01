@@ -8,9 +8,9 @@ export function Achievements() {
 
   return (
     <div className="screen">
-      <div className="h1">ACHIEVEMENTS</div>
+      <div className="h1">YUTUQLAR</div>
       <div className="dim" style={{ fontSize: '0.85rem' }}>
-        {unlocked.size}/{ACHIEVEMENTS.length} unlocked
+        {unlocked.size}/{ACHIEVEMENTS.length} ochilgan
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {ACHIEVEMENTS.map((a) => {

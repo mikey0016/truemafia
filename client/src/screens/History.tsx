@@ -7,16 +7,16 @@ function formatWhen(ts: number): string {
   const today = new Date();
   const isToday = d.toDateString() === today.toDateString();
   const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (isToday) return `Today ${time}`;
+  if (isToday) return `Bugun ${time}`;
   const yesterday = new Date(today.getTime() - 86400_000);
-  if (d.toDateString() === yesterday.toDateString()) return `Yesterday ${time}`;
+  if (d.toDateString() === yesterday.toDateString()) return `Kecha ${time}`;
   return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
 }
 
 const WINNER_LABEL: Record<string, string> = {
-  TOWN: 'TOWN WON',
-  MAFIA: 'MAFIA WON',
-  INDEPENDENT: 'CHAOS WON',
+  TOWN: 'SHAHAR YUTGAN',
+  MAFIA: 'MAFIYA YUTGAN',
+  INDEPENDENT: 'TARTIBSIZLIK YUTGAN',
 };
 
 export function History() {
@@ -28,7 +28,7 @@ export function History() {
 
   return (
     <div className="screen">
-      <div className="h1">HISTORY</div>
+      <div className="h1">TARIX</div>
 
       {historyLoading ? (
         <>
@@ -38,7 +38,7 @@ export function History() {
         </>
       ) : history.length === 0 ? (
         <div className="empty-state">
-          No games yet. Play your first match and it will show up here!
+          Hali o‘yin yo‘q. Birinchi o‘yiningizni o‘ynang, shu yerda chiqadi!
         </div>
       ) : (
         history.map((g) => {
@@ -54,11 +54,11 @@ export function History() {
                 </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700 }}>
-                  {WINNER_LABEL[g.winner ?? ''] ?? 'FINISHED'} ·{' '}
+                  {WINNER_LABEL[g.winner ?? ''] ?? 'TUGAGAN'} ·{' '}
                   <span style={{ color: role?.color ?? 'inherit' }}>{role?.name ?? g.role}</span>
                 </div>
                 <div className="label">
-                  {formatWhen(g.finishedAt)} · {g.rounds} rounds · {g.alive ? 'survived' : 'died'}
+                  {formatWhen(g.finishedAt)} · {g.rounds} raund · {g.alive ? 'omon qoldi' : 'o‘ldi'}
                 </div>
               </div>
             </div>

@@ -43,7 +43,7 @@ async function main(): Promise<void> {
   {
     const e = makeEngine(false);
     const r = e.pickRole(1, 'MAFIA');
-    assert(!r.ok && r.error === 'Draft disabled', 'draft disabled');
+    assert(!r.ok && r.error === 'Tanlash o‘chiq', 'draft disabled');
     e.dispose();
   }
 

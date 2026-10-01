@@ -58,7 +58,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
       if (result.failure) logAuthFailure('REST', `${result.failure} -> guest`);
     } else {
       logAuthFailure('REST', result.failure || 'no guest id');
-      res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'Ruxsatsiz' });
       return;
     }
   }
@@ -72,7 +72,7 @@ export function adminMiddleware(req: Request, res: Response, next: NextFunction)
     .filter((n) => Number.isFinite(n));
   const uid = req.tgUser?.userId;
   if (!uid || !ids.includes(uid)) {
-    res.status(403).json({ error: 'Forbidden' });
+    res.status(403).json({ error: 'Taqiqlangan' });
     return;
   }
   next();

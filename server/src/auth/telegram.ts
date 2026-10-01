@@ -130,6 +130,30 @@ export function guestUser(guestId: number, guestName: string): TelegramAuthUser 
   };
 }
 
+/** Foydalanuvchiga ko'rinadigan auth xato sababi (ichki kodlar inglizcha qoladi). */
+export function failureUz(failure: string): string {
+  switch (failure) {
+    case 'empty initData':
+      return 'bo‘sh initData';
+    case 'no bot token':
+    case 'no server token':
+      return 'serverda token yo‘q';
+    case 'no hash':
+      return 'imzo yo‘q';
+    case 'bad signature':
+      return 'imzo xato';
+    case 'no user':
+    case 'invalid user':
+      return 'foydalanuvchi topilmadi';
+    case 'expired initData':
+      return 'muddati o‘tgan';
+    case 'no guest id':
+      return 'mehmon id yo‘q';
+    default:
+      return 'noma’lum';
+  }
+}
+
 /**
  * Diagnostika: auth muvaffaqiyatsizliklarini (birinchi 10 tasini) loglaydi.
  * BOT_TOKEN id'si (nuqtadan oldingi qism) ko'rsatiladi — token mismatch'ni aniqlashga yordam beradi.

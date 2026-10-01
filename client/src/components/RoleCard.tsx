@@ -40,14 +40,14 @@ export function RoleCard({ role, onClose }: { role: RoleId; onClose: () => void 
         {/* FRONT — yopiq karta */}
         <div className="role-face front card-glow-unknown">
           <div className="role-shine" />
-          <div className="label">YOUR ROLE</div>
+          <div className="label">SIZNING ROLINGIZ</div>
           <div style={{ fontSize: '3.8rem', animation: 'floaty 3.2s ease-in-out infinite' }}>🌙</div>
           <div className="role-name" style={{ fontSize: '1.3rem', color: 'var(--text-dim)' }}>
             ????
           </div>
           <div className="role-divider" />
           <div className="role-tagline" style={{ color: 'var(--gold)', animation: 'hintPulse 2s ease-in-out infinite' }}>
-            TAP TO REVEAL
+            BOSIB OCHING
           </div>
         </div>
 
@@ -79,7 +79,7 @@ export function RoleCard({ role, onClose }: { role: RoleId; onClose: () => void 
             onClose();
           }}
         >
-          UNDERSTOOD ✓
+          TUSHUNDIM ✓
         </button>
       )}
     </div>

@@ -7,9 +7,9 @@ import { haptic } from '../services/telegram';
 import { useGameStore } from '../store/gameStore';
 
 const CHANNEL_LABEL: Record<string, string> = {
-  day: 'TOWN',
-  mafia: 'MAFIA',
-  ghosts: 'GHOSTS',
+  day: 'SHAHAR',
+  mafia: 'MAFIYA',
+  ghosts: 'ARVOHLAR',
 };
 
 export function Chat({ snapshot }: { snapshot: GameSnapshot }) {
@@ -51,7 +51,7 @@ export function Chat({ snapshot }: { snapshot: GameSnapshot }) {
     if (!t) return;
     haptic('light');
     getSocket().emit('chat:send', { channel, text: t }, (res) => {
-      if (!res.ok) useGameStore.getState().pushToast('error', res.error ?? 'Cannot send');
+        if (!res.ok) useGameStore.getState().pushToast('error', res.error ?? 'Yuborilmadi');
     });
     setText('');
   };
@@ -82,7 +82,7 @@ export function Chat({ snapshot }: { snapshot: GameSnapshot }) {
       <div className="chat-scroll" ref={scrollRef}>
         {visible.length === 0 && (
           <div className="empty-state">
-            No messages yet.{channel === 'ghosts' ? ' You watch from beyond…' : ' Break the silence.'}
+            Hali xabar yo‘q.{channel === 'ghosts' ? ' Nariqdan kuzatyapsiz…' : ' Sukunatni buzing.'}
           </div>
         )}
         {visible.map((m: ChatMessage) =>
@@ -102,14 +102,14 @@ export function Chat({ snapshot }: { snapshot: GameSnapshot }) {
             </div>
           ),
         )}
-        {typing && <div className="ghost-chat-note">{typing} is typing…</div>}
+        {typing && <div className="ghost-chat-note">{typing} yozyapti…</div>}
       </div>
       {canChat ? (
         <div className="chat-input-row">
           <input
             value={text}
             maxLength={CHAT_MAX_LEN}
-            placeholder="Message…"
+            placeholder="Xabar…"
             onChange={(e) => {
               setText(e.target.value);
               getSocket().emit('chat:typing', { channel });
@@ -124,7 +124,7 @@ export function Chat({ snapshot }: { snapshot: GameSnapshot }) {
         </div>
       ) : (
         <div className="ghost-chat-note">
-          {channel === 'day' ? 'You are silenced (dead players cannot speak).' : ''}
+          {channel === 'day' ? 'Sizda so‘z yo‘q (o‘lganlar gapirolmaydi).' : ''}
         </div>
       )}
     </div>

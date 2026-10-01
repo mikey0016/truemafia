@@ -76,10 +76,10 @@ export class GameEngine {
     photoUrl?: string;
     isBot?: boolean;
   }): { ok: boolean; error?: string } {
-    if (this.phase !== 'LOBBY') return { ok: false, error: 'Game already started' };
+    if (this.phase !== 'LOBBY') return { ok: false, error: 'O‘yin allaqachon boshlangan' };
     if (this.players.some((x) => x.userId === p.userId)) return { ok: true };
     if (this.players.length >= this.settings.playerCount)
-      return { ok: false, error: 'Room is full' };
+      return { ok: false, error: 'Xona to‘lgan' };
 
     const seat = this.players.length + 1;
     this.players.push({
@@ -139,7 +139,7 @@ export class GameEngine {
       p.deathCause = 'LEFT';
       this.nightActions.delete(userId);
       this.votes.delete(userId);
-      this.pushSystem('day', `🚪 ${p.displayName} left the game.`);
+        this.pushSystem('day', `🚪 ${p.displayName} o‘yindan chiqdi.`);
       this.checkWin();
       if (!this.over) this.broadcastSnapshot();
     }
@@ -160,8 +160,8 @@ export class GameEngine {
   }
 
   start(hostId: number): { ok: boolean; error?: string } {
-    if (this.phase !== 'LOBBY') return { ok: false, error: 'Already started' };
-    if (hostId !== this.hostId) return { ok: false, error: 'Only the host can start' };
+    if (this.phase !== 'LOBBY') return { ok: false, error: 'Allaqachon boshlangan' };
+    if (hostId !== this.hostId) return { ok: false, error: 'Faqat host boshlay oladi' };
     if (this.players.length < MIN_PLAYERS)
       return { ok: false, error: `Need at least ${MIN_PLAYERS} players` };
 
@@ -229,10 +229,10 @@ export class GameEngine {
    * roleId null = tanlovni bekor qilish.
    */
   pickRole(userId: number, roleId: RoleId | null): { ok: boolean; error?: string } {
-    if (!this.settings.roleDraft) return { ok: false, error: 'Draft disabled' };
-    if (this.phase !== 'LOBBY') return { ok: false, error: 'Too late' };
+    if (!this.settings.roleDraft) return { ok: false, error: 'Tanlash o‘chiq' };
+    if (this.phase !== 'LOBBY') return { ok: false, error: 'Juda kech' };
     const p = this.players.find((x) => x.userId === userId);
-    if (!p || p.isBot) return { ok: false, error: 'Not in room' };
+    if (!p || p.isBot) return { ok: false, error: 'Xonada emassiz' };
     if (roleId === null) {
       this.rolePicks.delete(userId);
       this.hooks.onPhaseChanged();
@@ -240,12 +240,12 @@ export class GameEngine {
     }
     const pool = buildRolePlan(this.settings, this.settings.playerCount);
     const quota = pool.filter((r) => r === roleId).length;
-    if (quota === 0) return { ok: false, error: 'No such card' };
+    if (quota === 0) return { ok: false, error: 'Bunday karta yo‘q' };
     let used = 0;
     for (const [uid, r] of this.rolePicks) {
       if (uid !== userId && r === roleId) used++;
     }
-    if (used >= quota) return { ok: false, error: 'Card already taken' };
+    if (used >= quota) return { ok: false, error: 'Karta allaqachon olingan' };
     this.rolePicks.set(userId, roleId);
     this.hooks.onPhaseChanged();
     return { ok: true };
@@ -282,20 +282,20 @@ export class GameEngine {
 
   submitNightAction(userId: number, targetId: number): { ok: boolean; error?: string } {
     const actor = this.players.find((p) => p.userId === userId);
-    if (!actor) return { ok: false, error: 'Not in game' };
-    if (this.phase !== 'NIGHT') return { ok: false, error: 'Not night' };
-    if (!actor.alive) return { ok: false, error: 'Dead players cannot act' };
+    if (!actor) return { ok: false, error: 'O‘yinda emassiz' };
+    if (this.phase !== 'NIGHT') return { ok: false, error: 'Hozir tun emas' };
+    if (!actor.alive) return { ok: false, error: 'O‘lganlar harakat qilolmaydi' };
     const def = ROLES[actor.role];
-    if (!def.nightAction || !def.actionKind) return { ok: false, error: 'Your role has no night action' };
+    if (!def.nightAction || !def.actionKind) return { ok: false, error: 'Rolingizda tungi harakat yo‘q' };
     const target = this.players.find((p) => p.userId === targetId);
-    if (!target || !target.alive) return { ok: false, error: 'Invalid target' };
+    if (!target || !target.alive) return { ok: false, error: 'Noto‘g‘ri nishon' };
 
     // mafia cannot target mafia; doctor self-heal allowed once? keep simple: self-protect allowed
     if (def.actionKind === 'kill' && actor.role !== 'SERIAL_KILLER') {
-      if (isMafia(target.role)) return { ok: false, error: 'You cannot target your own family' };
+      if (isMafia(target.role)) return { ok: false, error: 'O‘z oilangizga tegolmaysiz' };
     }
     if ((def.actionKind === 'protect' || def.actionKind === 'save') && actor.lastNightTarget === targetId) {
-      return { ok: false, error: 'Cannot protect the same player two nights in a row' };
+      return { ok: false, error: 'Bir kishini ikki tun ketma-ket himoyalab bo‘lmaydi' };
     }
 
     this.nightActions.set(userId, { actorId: userId, kind: def.actionKind, targetId });
@@ -415,9 +415,9 @@ export class GameEngine {
     const names = deaths.map((d) => this.players.find((p) => p.userId === d.userId)?.displayName ?? '?');
     let text: string;
     if (deaths.length === 0) {
-      text = '☀️ The town wakes. Everyone survived the night.';
+      text = '☀️ Shahar uyg‘ondi. Hamma tunni omon o‘tkazdi.';
     } else {
-      text = `🌙 ${names.join(', ')} ${deaths.length === 1 ? 'was' : 'were'} found dead at dawn.`;
+      text = `🌙 Tongda ${names.join(', ')} o‘lik topildi.`;
     }
     this.pushSystem('day', text);
 
@@ -432,7 +432,7 @@ export class GameEngine {
     this.phaseEndsAt = Date.now() + this.daySeconds * 1000;
     this.hooks.onPhaseChanged();
     this.broadcastSnapshot();
-    this.pushSystem('day', `☀️ Day ${this.round}. ${this.alivePlayers().length} players remain.`);
+    this.pushSystem('day', `☀️ ${this.round}-kun. ${this.alivePlayers().length} o‘yinchi qoldi.`);
     this.beginPhaseTimer(this.daySeconds * 1000, () => this.toDiscussion());
   }
 
@@ -459,12 +459,12 @@ export class GameEngine {
   }
 
   castVote(voterId: number, targetId: number): { ok: boolean; error?: string } {
-    if (this.phase !== 'VOTING') return { ok: false, error: 'Not in voting phase' };
+    if (this.phase !== 'VOTING') return { ok: false, error: 'Hozir ovoz berish emas' };
     const voter = this.players.find((p) => p.userId === voterId);
-    if (!voter) return { ok: false, error: 'Not in game' };
-    if (!voter.alive) return { ok: false, error: 'Dead players cannot vote' };
+    if (!voter) return { ok: false, error: 'O‘yinda emassiz' };
+    if (!voter.alive) return { ok: false, error: 'O‘lganlar ovoz berolmaydi' };
     const target = this.players.find((p) => p.userId === targetId);
-    if (!target || !target.alive) return { ok: false, error: 'Invalid target' };
+    if (!target || !target.alive) return { ok: false, error: 'Noto‘g‘ri nishon' };
     this.votes.set(voterId, targetId);
     this.hooks.onPhaseChanged();
     this.broadcastSnapshot();
@@ -510,9 +510,9 @@ export class GameEngine {
       .sort((a, b) => b[1] - a[1])
       .map(([id, c]) => {
         const p = this.players.find((x) => x.userId === id);
-        return `• ${p?.displayName ?? id} — ${c} vote${c === 1 ? '' : 's'}`;
+        return `• ${p?.displayName ?? id} — ${c} ovoz`;
       });
-    this.pushSystem('day', lines.length ? `🗳 Voting results:\n${lines.join('\n')}` : '🗳 No votes were cast.');
+    this.pushSystem('day', lines.length ? `🗳 Ovoz natijalari:\n${lines.join('\n')}` : '🗳 Hech kim ovoz bermadi.');
 
     if (eliminatedId !== null) {
       const elim = this.players.find((p) => p.userId === eliminatedId);
@@ -524,16 +524,16 @@ export class GameEngine {
 
         if (elim.role === 'JESTER') {
           // Jester wins instantly
-          this.finish(['INDEPENDENT'], 'The Jester was voted out — chaos wins!');
+          this.finish(['INDEPENDENT'], 'Masxaraboz ovoz bilan chiqarildi — tartibsizlik g‘olib!');
           return;
         }
-        this.pushSystem('day', `⚖️ ${elim.displayName} was eliminated.`);
+        this.pushSystem('day', `⚖️ ${elim.displayName} chiqarib yuborildi.`);
         if (this.settings.revealRolesOnDeath) {
-          this.pushSystem('day', `They were ${ROLES[elim.role].name.toUpperCase()}.`);
+          this.pushSystem('day', `U ${ROLES[elim.role].name.toUpperCase()} edi.`);
         }
       }
     } else {
-      this.pushSystem('day', '⚖️ The town could not decide. No one was eliminated.');
+      this.pushSystem('day', '⚖️ Shahar bir qarorga kelolmadi. Hech kim chiqarilmadi.');
     }
 
     // Stall himoyasi: 3 raund ketma-ket hech kim ovoz bermasa va tunda
@@ -547,7 +547,7 @@ export class GameEngine {
       const mafiaLeft = this.alivePlayers().some((p) => isMafia(p.role));
       this.finish(
         [mafiaLeft ? 'MAFIA' : 'TOWN'],
-        'Stalemate — three rounds passed with no votes and no night actions.',
+        'Turg‘unlik — 3 raund davomida na ovoz, na tungi harakat bo‘ldi.',
       );
       return;
     }
@@ -575,17 +575,17 @@ export class GameEngine {
 
     if (mafiaAlive === 0 && skAlive === 0 && indAlive === 0) {
       winner = 'TOWN';
-      reason = 'All threats eliminated.';
+      reason = 'Barcha xavf bartaraf etildi.';
     } else if (mafiaAlive === 1 && townAlive === 1 && skAlive === 0 && indAlive === 0) {
       // 1v1: mafiya tunda baribir o'ldiradi — o'yinni cho'zmaymiz
       winner = 'MAFIA';
-      reason = 'One-on-one — the Mafia strikes at night.';
+      reason = 'Yakama-yakka — Mafiya tunda zarba beradi.';
     } else if (mafiaAlive > 0 && mafiaAlive >= alive.length - mafiaAlive - skAlive - indAlive) {
       winner = 'MAFIA';
-      reason = 'The Mafia outnumbers the town.';
+      reason = 'Mafiya shahardan ko‘pchilikni tashkil qiladi.';
     } else if (skAlive === 1 && alive.length === 1) {
       winner = 'INDEPENDENT';
-      reason = 'The Serial Killer is the last one breathing.';
+      reason = 'Seriyali qotil so‘nggi nafas oluvchi bo‘ldi.';
     }
 
     if (winner) {
@@ -612,22 +612,22 @@ export class GameEngine {
 
   chatSend(userId: number, channel: ChatMessage['channel'], text: string): { ok: boolean; error?: string } {
     const p = this.players.find((x) => x.userId === userId);
-    if (!p) return { ok: false, error: 'Not in game' };
-    if (this.over) return { ok: false, error: 'Game over' };
+    if (!p) return { ok: false, error: 'O‘yinda emassiz' };
+    if (this.over) return { ok: false, error: 'O‘yin tugagan' };
     const trimmed = text.trim().slice(0, 240);
-    if (!trimmed) return { ok: false, error: 'Empty message' };
+    if (!trimmed) return { ok: false, error: 'Bo‘sh xabar' };
 
     if (channel === 'day') {
       if (this.phase !== 'DISCUSSION' && this.phase !== 'DAY' && this.phase !== 'VOTING')
-        return { ok: false, error: 'Chat is closed' };
-      if (!p.alive) return { ok: false, error: 'Dead players cannot speak' };
+        return { ok: false, error: 'Chat yopiq' };
+      if (!p.alive) return { ok: false, error: 'O‘lganlar gapirolmaydi' };
     } else if (channel === 'mafia') {
-      if (!isMafia(p.role) || !p.alive) return { ok: false, error: 'Not allowed' };
+      if (!isMafia(p.role) || !p.alive) return { ok: false, error: 'Ruxsat yo‘q' };
       if (this.phase !== 'NIGHT' && this.phase !== 'DISCUSSION' && this.phase !== 'DAY')
-        return { ok: false, error: 'Mafia chat is closed' };
+        return { ok: false, error: 'Mafiya chati yopiq' };
     } else {
       // ghosts channel: dead players only
-      if (p.alive) return { ok: false, error: 'Living players cannot see this channel' };
+      if (p.alive) return { ok: false, error: 'Tiriklar bu kanalni ko‘rolmaydi' };
     }
 
     const msg: ChatMessage = {
@@ -649,7 +649,7 @@ export class GameEngine {
       id: `sys_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       channel,
       senderId: 0,
-      senderName: 'SYSTEM',
+      senderName: 'TIZIM',
       text,
       at: Date.now(),
     };

@@ -242,7 +242,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pickRole: (roleId) => {
     import('../services/socket').then(({ getSocket }) => {
       getSocket().emit('room:pickRole', { roleId }, (res) => {
-        if (!res.ok) get().pushToast('error', res.error ?? 'Cannot pick');
+        if (!res.ok) get().pushToast('error', res.error ?? 'Tanlab bo‘lmadi');
       });
     });
   },
@@ -311,7 +311,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     } catch (e) {
       set({
         openRoomsLoading: false,
-        openRoomsError: e instanceof Error ? e.message : 'Network error',
+        openRoomsError: e instanceof Error ? e.message : 'Tarmoq xatosi',
       });
     }
   },
@@ -344,16 +344,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       });
       const json = (await res.json()) as { ok?: boolean; error?: string; balance?: number };
       if (!res.ok || !json.ok) {
-        get().pushToast('error', json.error ?? 'Buy failed');
+        get().pushToast('error', json.error ?? 'Olinmadi');
         return false;
       }
       if (typeof json.balance === 'number') set({ shopBalance: json.balance });
-      get().pushToast('success', 'Purchased!');
+      get().pushToast('success', 'Sotib olindi!');
       void get().loadShop();
       void get().loadProfile();
       return true;
     } catch {
-      get().pushToast('error', 'Network error');
+      get().pushToast('error', 'Tarmoq xatosi');
       return false;
     }
   },

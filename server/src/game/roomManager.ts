@@ -69,7 +69,7 @@ export class RoomManager {
         );
       })
       .sort((a, b) => a.engine.startedAtTime - b.engine.startedAtTime);
-    if (candidates.length === 0) return { ok: false, error: 'No open rooms. Create one!' };
+    if (candidates.length === 0) return { ok: false, error: 'Ochiq xona yo‘q. Yarating!' };
     const target = candidates[0].engine;
     const res = target.addPlayer(user);
     if (!res.ok) return { ok: false, error: res.error };
@@ -78,10 +78,10 @@ export class RoomManager {
 
   joinByCode(user: JoinUser, code: string): { ok: boolean; error?: string } {
     const room = this.rooms.get(code.toUpperCase());
-    if (!room) return { ok: false, error: 'Room not found' };
+    if (!room) return { ok: false, error: 'Xona topilmadi' };
     const e = room.engine;
     if (!e.players.some((p) => p.userId === user.userId)) {
-      if (e.phase !== 'LOBBY') return { ok: false, error: 'Game already in progress' };
+      if (e.phase !== 'LOBBY') return { ok: false, error: 'O‘yin allaqachon boshlangan' };
       const res = e.addPlayer(user);
       if (!res.ok) return { ok: false, error: res.error };
     }

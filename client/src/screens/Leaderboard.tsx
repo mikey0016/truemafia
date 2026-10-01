@@ -14,11 +14,11 @@ export function Leaderboard() {
 
   return (
     <div className="screen">
-      <div className="h1">LEADERBOARD</div>
+      <div className="h1">REYTING</div>
       <div className="tabbar">
         {(['GLOBAL', 'WEEKLY', 'MONTHLY'] as Range[]).map((r) => (
           <button key={r} className={range === r ? 'active' : ''} onClick={() => setRange(r)}>
-            {r}
+            {r === 'GLOBAL' ? 'UMUMIY' : r === 'WEEKLY' ? 'HAFTALIK' : 'OYLIK'}
           </button>
         ))}
       </div>
@@ -31,7 +31,7 @@ export function Leaderboard() {
 </>
       ) : leaderboard.length === 0 ? (
         <div className="empty-state">
-          No ranked players yet. Play games to appear here!
+          Hali reytingda hech kim yo‘q. O‘ynang va shu yerda chiqing!
         </div>
       ) : (
         leaderboard.map((e, i) => (
@@ -42,11 +42,11 @@ export function Leaderboard() {
               <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {e.username}
               </div>
-              <div className="label">{e.wins} WINS · {e.games} GAMES</div>
+              <div className="label">{e.wins} G‘ALABA · {e.games} O‘YIN</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div className="gold mono" style={{ fontWeight: 800 }}>{e.rating}</div>
-              <div className="label">RATING</div>
+              <div className="label">REYTING</div>
             </div>
           </div>
         ))

@@ -18,11 +18,11 @@ export function Settings() {
 
   return (
     <div className="screen">
-      <div className="h1">SETTINGS</div>
+      <div className="h1">SOZLAMALAR</div>
 
       <div className="card">
         <div className="toggle-row">
-          <span>🔊 Sound</span>
+          <span>🔊 Ovoz</span>
           <button
             className={`toggle ${prefs.sound ? 'on' : ''}`}
             onClick={() => {
@@ -32,7 +32,7 @@ export function Settings() {
           />
         </div>
         <div className="toggle-row">
-          <span>📳 Vibration</span>
+          <span>📳 Vibratsiya</span>
           <button
             className={`toggle ${prefs.vibro ? 'on' : ''}`}
             onClick={() => {
@@ -44,13 +44,13 @@ export function Settings() {
       </div>
 
       <div className="card">
-        <div className="label" style={{ marginBottom: 6 }}>CONNECTION</div>
+        <div className="label" style={{ marginBottom: 6 }}>ULANISH</div>
         <div className="dim" style={{ fontSize: '0.85rem' }}>
-          {getInitData() ? 'Telegram authentication active' : 'Running outside Telegram — dev mode'}
+          {getInitData() ? 'Telegram autentifikatsiya faol' : 'Telegram’siz ishlamoqda — mehmon rejimi'}
         </div>
         <div className="row" style={{ gap: 8, marginTop: 8 }}>
           <span className={`dot ${connected ? '' : 'off'}`} />
-          <span className="label">{connected ? 'SERVER CONNECTED' : 'SERVER NOT CONNECTED'}</span>
+          <span className="label">{connected ? 'SERVER ULANGAN' : 'SERVER ULANMAGAN'}</span>
         </div>
       </div>
 
@@ -71,12 +71,12 @@ export function Settings() {
           style={{ fontSize: '0.9rem' }}
         />
         <button className="btn btn-primary btn-block" style={{ marginTop: 10 }} onClick={saveBackend}>
-          {saved ? 'SAVED — RELOADING…' : 'SAVE & RELOAD'}
+          {saved ? 'SAQLANDI — QAYTA YUKLANMOQDA…' : 'SAQLASH VA QAYTA YUKLASH'}
         </button>
       </div>
 
       <div className="spacer" />
-      <div className="ghost-chat-note">TRUE MAFIA · v1.2.0</div>
+      <div className="ghost-chat-note">TRUE MAFIA · v1.3.0</div>
     </div>
   );
 }

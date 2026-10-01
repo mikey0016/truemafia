@@ -4,6 +4,7 @@ import type { ChatMessage, GameSnapshot, RoomSettings, Team } from '@truemafia/s
 import { ACHIEVEMENTS, CHAT_MAX_LEN, RATE_LIMITS } from '@truemafia/shared';
 import { isPremiumRole, shopItemForRole } from '@truemafia/shared';
 import {
+  failureUz,
   guestUser,
   logAuthFailure,
   parseInitDataInsecure,
@@ -85,9 +86,10 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         io.to(`user:${userId}`).emit('game:achievement', { id, name });
       },
       onGameOver: (winner: Team, reason: string) => {
+        const winnerUz = winner === 'MAFIA' ? 'MAFIYA' : winner === 'TOWN' ? 'SHAHAR' : 'MUSTAQIL';
         io.to(`room:${roomCode}`).emit('game:toast', {
           kind: 'info',
-          message: `${winner} wins — ${reason}`,
+          message: `${winnerUz} YUTDI — ${reason}`,
         });
         // persist results + progression, then surface freshly unlocked achievements
         void deps.recorder
@@ -151,7 +153,8 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         }
         if (!u) {
           logAuthFailure('WS', failReason || 'unknown');
-          ack?.({ ok: false, error: `Invalid auth (${failReason || 'unknown'})` });
+          const parts = (failReason || 'unknown').split('+').map((s) => failureUz(s.trim()));
+          ack?.({ ok: false, error: `Noto‘g‘ri auth (${parts.join(' + ')})` });
           return;
         }
         socket.data.userId = u.userId;
@@ -166,7 +169,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
 
     const requireAuth = (): boolean => {
       if (authed) return true;
-      socket.emit('room:error', { code: 'UNAUTHENTICATED', message: 'Authenticate first' });
+      socket.emit('room:error', { code: 'UNAUTHENTICATED', message: 'Avval autentifikatsiya qiling' });
       return false;
     };
 
@@ -193,7 +196,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
     socket.on('room:create', async (payload, ack) => {
       if (!requireAuth()) return;
       if (!limiter.check(`create:${me().userId}`, RATE_LIMITS.createRoom)) {
-        ack?.({ ok: false, error: 'Slow down' });
+        ack?.({ ok: false, error: 'Sekinroq' });
         return;
       }
       const settings = sanitizeSettings(payload?.settings);
@@ -201,7 +204,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       const settingsBots = clampInt(settings.botCount ?? 0, 0, 14, 0);
       const demoBots = clampInt(payload?.demoBots ?? 0, 0, 14, 0);
       if (demoBots > 0 && !isDemoAllowed()) {
-        ack?.({ ok: false, error: 'Demo mode disabled' });
+        ack?.({ ok: false, error: 'Demo rejim o�chiq' });
         return;
       }
       const totalBots = Math.min(14, settingsBots + demoBots);
@@ -233,7 +236,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       if (!requireAuth()) return;
       const res = deps.roomManager.quickJoin({ ...me() });
       if (!res.ok || !res.code) {
-        ack?.({ ok: false, error: res.error ?? 'No rooms' });
+        ack?.({ ok: false, error: res.error ?? 'Xonalar yo�q' });
         return;
       }
       joinRoomSocket(res.code);
@@ -244,7 +247,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       if (!requireAuth()) return;
       const code = String(payload?.code ?? '').toUpperCase().slice(0, 8);
       if (!code) {
-        ack?.({ ok: false, error: 'Code required' });
+        ack?.({ ok: false, error: 'Kod kiriting' });
         return;
       }
       const res = deps.roomManager.joinByCode({ ...me() }, code);
@@ -280,7 +283,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       if (!requireAuth()) return;
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'Not in a room' });
+        ack?.({ ok: false, error: 'Xonada emassiz' });
         return;
       }
       room.engine.setReady(me().userId, !!payload?.ready);
@@ -291,12 +294,12 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
     socket.on('room:pickRole', async (payload, ack) => {
       if (!requireAuth()) return;
       if (!limiter.check(`pick:${me().userId}`, RATE_LIMITS.action)) {
-        ack?.({ ok: false, error: 'Slow down' });
+        ack?.({ ok: false, error: 'Sekinroq' });
         return;
       }
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'Not in a room' });
+        ack?.({ ok: false, error: 'Xonada emassiz' });
         return;
       }
       const raw = payload?.roleId;
@@ -307,7 +310,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
             ? (raw.toUpperCase() as import('@truemafia/shared').RoleId)
             : null;
       if (roleId !== null && !/^[A-Z_]+$/.test(roleId)) {
-        ack?.({ ok: false, error: 'Bad role' });
+        ack?.({ ok: false, error: 'Noto�g�ri rol' });
         return;
       }
       // Premium aktiv rollar — faqat marketdan sotib olganlar tanlay oladi
@@ -315,7 +318,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         const item = shopItemForRole(roleId)!;
         const owned = await deps.users.ownsItem(me().userId, item.id);
         if (!owned) {
-          ack?.({ ok: false, error: `Locked — buy ${item.id} in Market (${item.price} 🪙)` });
+          ack?.({ ok: false, error: `Qulfli — Marketdan oling (${item.price} 🪙)` });
           return;
         }
       }
@@ -328,7 +331,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       if (!requireAuth()) return;
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'Not in a room' });
+        ack?.({ ok: false, error: 'Xonada emassiz' });
         return;
       }
       const addBots = clampInt(payload?.addBots ?? 0, 0, 14, 0);
@@ -348,12 +351,12 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
     socket.on('game:action', (payload, ack) => {
       if (!requireAuth()) return;
       if (!limiter.check(`action:${me().userId}`, RATE_LIMITS.action)) {
-        ack?.({ ok: false, error: 'Slow down' });
+        ack?.({ ok: false, error: 'Sekinroq' });
         return;
       }
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'Not in a game' });
+        ack?.({ ok: false, error: 'O�yinda emassiz' });
         return;
       }
       const targetId = clampInt(payload?.targetId, -1, 2 ** 53, -1);
@@ -364,12 +367,12 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
     socket.on('game:vote', (payload, ack) => {
       if (!requireAuth()) return;
       if (!limiter.check(`vote:${me().userId}`, RATE_LIMITS.vote)) {
-        ack?.({ ok: false, error: 'Slow down' });
+        ack?.({ ok: false, error: 'Sekinroq' });
         return;
       }
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'Not in a game' });
+        ack?.({ ok: false, error: 'O�yinda emassiz' });
         return;
       }
       const targetId = clampInt(payload?.targetId, -1, 2 ** 53, -1);
@@ -381,7 +384,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       if (!requireAuth()) return;
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'Not in a game' });
+        ack?.({ ok: false, error: 'O�yinda emassiz' });
         return;
       }
       room.engine.requestContinue(me().userId);
@@ -391,12 +394,12 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
     socket.on('chat:send', (payload, ack) => {
       if (!requireAuth()) return;
       if (!limiter.check(`chat:${me().userId}`, RATE_LIMITS.chat)) {
-        ack?.({ ok: false, error: 'Slow down' });
+        ack?.({ ok: false, error: 'Sekinroq' });
         return;
       }
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'Not in a game' });
+        ack?.({ ok: false, error: 'O�yinda emassiz' });
         return;
       }
       const channel: ChatMessage['channel'] =

@@ -48,7 +48,7 @@ export function Lobby() {
     haptic('heavy');
     setAddingBots(false);
     getSocket().emit('room:start', { addBots: withBots ? target - count : 0 }, (res) => {
-      if (!res.ok) pushToast('error', res.error ?? 'Cannot start');
+        if (!res.ok) pushToast('error', res.error ?? 'Boshlab bo‘lmadi');
     });
   };
 
@@ -73,7 +73,7 @@ export function Lobby() {
   if (!roomCode) {
     return (
       <div className="screen">
-        <div className="error-state">Not connected to a room. Go back and join one.</div>
+        <div className="error-state">Xonaga ulanmagansiz. Orqaga qaytib, biriga qo‘shiling.</div>
       </div>
     );
   }
@@ -82,19 +82,19 @@ export function Lobby() {
     <div className="screen">
       <div className="row-between">
         <div>
-          <div className="label">ROOM</div>
+          <div className="label">XONA</div>
           <div className="h1 mono gold" onClick={copyCode} style={{ cursor: 'pointer' }}>
             #{roomCode}
           </div>
         </div>
         <button className="badge badge-gold" style={{ padding: '10px 16px', fontSize: '0.75rem' }} onClick={copyCode}>
-          {copied ? 'COPIED ✓' : 'COPY CODE'}
+          {copied ? 'NUSXALANDI ✓' : 'KODNI NUSXALASH'}
         </button>
       </div>
 
       <div className="card">
         <div className="row-between" style={{ marginBottom: 10 }}>
-          <span className="label">PLAYERS</span>
+          <span className="label">O‘YINCHILAR</span>
           <span className="badge">{count}/{target}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -107,11 +107,11 @@ export function Lobby() {
                 </div>
                 <div className="row" style={{ gap: 6 }}>
                   <span className={`dot ${p.connected ? '' : 'off'}`} />
-                  <span className="label">{p.connected ? 'ONLINE' : 'OFFLINE'}</span>
+                  <span className="label">{p.connected ? 'ONLAYN' : 'OFLAYN'}</span>
                 </div>
               </div>
               {p.isBot && <span className="badge">BOT</span>}
-              {p.ready && <span className="badge badge-green">READY</span>}
+              {p.ready && <span className="badge badge-green">TAYYOR</span>}
               {p.isHost && <span className="crown">👑</span>}
             </div>
           ))}
@@ -141,43 +141,43 @@ export function Lobby() {
 
       {allHere && (
         <div className="saved-banner" style={{ padding: 12 }}>
-          <span className="gold" style={{ fontWeight: 800, letterSpacing: '0.1em' }}>READY TO START</span>
+          <span className="gold" style={{ fontWeight: 800, letterSpacing: '0.1em' }}>BOSHLASHGA TAYYOR</span>
         </div>
       )}
 
       {isHost ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button className="btn btn-primary btn-block btn-lg" disabled={count < MIN_PLAYERS} onClick={() => start(false)}>
-            START GAME
+            <button className="btn btn-primary btn-block btn-lg" disabled={count < MIN_PLAYERS} onClick={() => start(false)}>
+            BOSHLASH
           </button>
           {isDev && count < target && (
             <button className="btn btn-ghost btn-block" onClick={() => start(true)}>
-              START WITH BOTS (DEV — ADD {target - count})
+              BOTLAR BILAN BOSHLASH (DEV — {target - count} QO‘SHISH)
             </button>
           )}
           {count < MIN_PLAYERS && (
-            <div className="ghost-chat-note">Waiting for at least {MIN_PLAYERS} players…</div>
+            <div className="ghost-chat-note">Kamida {MIN_PLAYERS} o‘yinchi kutilmoqda…</div>
           )}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button className="btn btn-block btn-lg" onClick={toggleReady}>
-            {ready ? 'READY ✓' : 'MARK READY'}
+            <button className="btn btn-block btn-lg" onClick={toggleReady}>
+            {ready ? 'TAYYORMAN ✓' : 'TAYYORLIGINI BILDIRISH'}
           </button>
-          <div className="ghost-chat-note">WAITING FOR HOST…</div>
+          <div className="ghost-chat-note">HOST KUTILMOQDA…</div>
         </div>
       )}
       {humans === 1 && !isDev && (
-        <div className="ghost-chat-note">Share the code so friends can join!</div>
+        <div className="ghost-chat-note">Kodini do‘stlaringizga ulashing, qo‘shilishsin!</div>
       )}
       {isDev && !isHost && (
         <button className="btn btn-ghost btn-block" onClick={() => setAddingBots(!addingBots)}>
-          {addingBots ? 'HIDE' : 'DEV: need bots?'}
+          {addingBots ? 'YASHIRISH' : 'DEV: bot kerakmi?'}
         </button>
       )}
 
       <button className="btn btn-ghost btn-block" style={{ color: '#ff6b6b' }} onClick={leave}>
-        LEAVE ROOM
+        XONADAN CHIQISH
       </button>
     </div>
   );
@@ -216,10 +216,10 @@ function RoleDraftCard({
   return (
     <div className="card">
       <div className="row-between" style={{ marginBottom: 4 }}>
-        <span className="label">ROLE DRAFT — YOPPIQ TANLOV 🕵️</span>
+        <span className="label">ROL TANLASH — YOPPIQ TANLOV 🕵️</span>
         {myPick && (
           <button className="btn" style={{ height: 30, padding: '0 10px', fontSize: '0.7rem' }} onClick={() => onPick(null)}>
-            CLEAR
+            TOZALASH
           </button>
         )}
       </div>

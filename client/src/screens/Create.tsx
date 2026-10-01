@@ -58,7 +58,7 @@ export function Create() {
         }
         if (!res?.ok) {
           hapticNotify('error');
-          pushToast('error', res?.error ?? 'Failed to create room');
+          pushToast('error', res?.error ?? 'Xona ochilmadi');
           return;
         }
         hapticNotify('success');
@@ -68,11 +68,11 @@ export function Create() {
   return (
     <div className="screen">
       <div className="row-between">
-        <div className="h1">CREATE ROOM</div>
+        <div className="h1">XONA OCHISH</div>
       </div>
 
       <div className="card">
-        <div className="label" style={{ marginBottom: 10 }}>PLAYERS</div>
+        <div className="label" style={{ marginBottom: 10 }}>O‘YINCHILAR</div>
         <div className="chip-row">
           {PLAYER_COUNT_OPTIONS.filter((n) => n >= MIN_PLAYERS && n <= MAX_PLAYERS).map((n) => (
             <button key={n} className={`chip ${settings.playerCount === n ? 'active' : ''}`} onClick={() => update({ playerCount: n })}>
@@ -81,7 +81,7 @@ export function Create() {
           ))}
         </div>
 
-        <div className="label" style={{ margin: '14px 0 10px' }}>MAFIA</div>
+        <div className="label" style={{ margin: '14px 0 10px' }}>MAFIYA SONI</div>
         <div className="chip-row">
           {[1, 2, 3, 4].map((n) => (
             <button key={n} className={`chip ${settings.mafiaCount === n ? 'active' : ''}`} onClick={() => update({ mafiaCount: n })}>
@@ -90,7 +90,7 @@ export function Create() {
           ))}
         </div>
 
-        <div className="label" style={{ margin: '14px 0 10px' }}>GAME TYPE</div>
+        <div className="label" style={{ margin: '14px 0 10px' }}>O‘YIN TURI</div>
         <div className="chip-row">
           {(['CLASSIC', 'ADVANCED', 'CUSTOM'] as const).map((t) => (
             <button
@@ -103,22 +103,22 @@ export function Create() {
                 if (t === 'CUSTOM') update({ bodyguardEnabled: true });
               }}
             >
-              {t}
+              {t === 'CLASSIC' ? 'KLASSIK' : t === 'ADVANCED' ? 'KENGAYTIRILGAN' : 'MAXSUS'}
             </button>
           ))}
         </div>
       </div>
 
       <div className="card">
-        <div className="label" style={{ marginBottom: 4 }}>ROLES</div>
+        <div className="label" style={{ marginBottom: 4 }}>ROLLAR</div>
         {(
           [
             ['donEnabled', 'Don'],
-            ['doctorEnabled', 'Doctor'],
-            ['detectiveEnabled', 'Detective'],
-            ['bodyguardEnabled', 'Bodyguard'],
-            ['serialKillerEnabled', 'Serial Killer'],
-            ['jesterEnabled', 'Jester'],
+            ['doctorEnabled', 'Doktor'],
+            ['detectiveEnabled', 'Detektiv'],
+            ['bodyguardEnabled', 'Tansoqchi'],
+            ['serialKillerEnabled', 'Seriyali qotil'],
+            ['jesterEnabled', 'Masxaraboz'],
           ] as const
         ).map(([key, label]) => (
           <div key={key} className="toggle-row">
@@ -132,12 +132,12 @@ export function Create() {
       </div>
 
       <div className="card">
-        <div className="label" style={{ marginBottom: 10 }}>TIMERS (SECONDS)</div>
+        <div className="label" style={{ marginBottom: 10 }}>TAYMERLAR (SONIYA)</div>
         {(
           [
-            ['discussionSeconds', 'Discussion', 30, 600],
-            ['votingSeconds', 'Voting', 15, 300],
-            ['nightSeconds', 'Night', 15, 300],
+            ['discussionSeconds', 'Muhokama', 30, 600],
+            ['votingSeconds', 'Ovoz berish', 15, 300],
+            ['nightSeconds', 'Tun', 15, 300],
           ] as const
         ).map(([key, label, min, max]) => (
           <div key={key} className="toggle-row">
@@ -150,29 +150,29 @@ export function Create() {
         </div>
         ))}
         <div className="toggle-row">
-          <span>Private room</span>
+          <span>Yopiq xona</span>
           <button className={`toggle ${settings.privateRoom ? 'on' : ''}`} onClick={() => update({ privateRoom: !settings.privateRoom })} />
         </div>
         <div className="toggle-row">
-          <span>Reveal roles on death</span>
+          <span>O‘lganda rolni ko‘rsatish</span>
           <button className={`toggle ${settings.revealRolesOnDeath ? 'on' : ''}`} onClick={() => update({ revealRolesOnDeath: !settings.revealRolesOnDeath })} />
         </div>
         <div className="toggle-row">
-          <span>Anonymous voting</span>
+          <span>Yashirin ovoz berish</span>
           <button className={`toggle ${settings.anonymousVoting ? 'on' : ''}`} onClick={() => update({ anonymousVoting: !settings.anonymousVoting })} />
         </div>
         <div className="toggle-row">
-          <span>🎴 Role draft <span className="dim" style={{ fontSize: '0.72rem' }}>(choose cards)</span></span>
+          <span>🎴 Rol tanlash <span className="dim" style={{ fontSize: '0.72rem' }}>(kartani o‘zing tanla)</span></span>
           <button className={`toggle ${settings.roleDraft ? 'on' : ''}`} onClick={() => update({ roleDraft: !settings.roleDraft })} />
         </div>
       </div>
 
       <div className="card">
-        <div className="label" style={{ marginBottom: 10 }}>🤖 BOTS</div>
+        <div className="label" style={{ marginBottom: 10 }}>🤖 BOTLAR</div>
         <div className="chip-row">
           {[0, 1, 3, 5, 7].filter((n) => n < (settings.playerCount ?? 8)).map((n) => (
             <button key={n} className={`chip ${settings.botCount === n ? 'active' : ''}`} onClick={() => update({ botCount: n })}>
-              {n === 0 ? 'None' : `+${n}`}
+              {n === 0 ? 'Yo‘q' : `+${n}`}
             </button>
           ))}
         </div>
@@ -183,7 +183,7 @@ export function Create() {
 
       <div className="spacer" />
       <button className="btn btn-primary btn-block btn-lg" disabled={creating} onClick={create}>
-        {creating ? 'CREATING…' : 'CREATE ROOM'}
+        {creating ? 'OCHILMOQDA…' : 'XONANI OCHISH'}
       </button>
     </div>
   );

@@ -37,12 +37,12 @@ export function createApiRouter(deps: {
   router.get('/profile/:userId', (req, res) => {
     const uid = parseInt(req.params.userId, 10);
     if (!Number.isFinite(uid)) {
-      res.status(400).json({ error: 'Bad id' });
+      res.status(400).json({ error: 'Noto‘g‘ri id' });
       return;
     }
     void deps.users.getProfile(uid).then((p) => {
       if (!p) {
-        res.status(404).json({ error: 'Not found' });
+        res.status(404).json({ error: 'Topilmadi' });
         return;
       }
       res.json({ profile: p });
@@ -70,7 +70,7 @@ export function createApiRouter(deps: {
     void deps.users
       .getHistory(uid)
       .then((history) => res.json({ history }))
-      .catch(() => res.status(500).json({ error: 'History unavailable' }));
+      .catch(() => res.status(500).json({ error: 'Tarix ochilmadi' }));
   });
 
   // ---- market ----
@@ -90,7 +90,7 @@ export function createApiRouter(deps: {
     const itemId = String(req.body?.item_id ?? '');
     const item = SHOP_ITEMS.find((i) => i.id === itemId);
     if (!item) {
-      res.status(400).json({ error: 'Unknown item' });
+      res.status(400).json({ error: 'Noma’lum narsa' });
       return;
     }
     void deps.users.buyItem(uid, item.id, item.price).then((r) => {
@@ -140,7 +140,7 @@ export function createApiRouter(deps: {
   router.post('/admin/ban/:userId', adminMiddleware, (req, res) => {
     const uid = parseInt(req.params.userId, 10);
     if (!Number.isFinite(uid)) {
-      res.status(400).json({ error: 'Bad id' });
+      res.status(400).json({ error: 'Noto‘g‘ri id' });
       return;
     }
     void deps.db.run('UPDATE users SET is_banned=1 WHERE user_id=$1', [uid]).then(() => {
@@ -151,7 +151,7 @@ export function createApiRouter(deps: {
   router.post('/admin/unban/:userId', adminMiddleware, (req, res) => {
     const uid = parseInt(req.params.userId, 10);
     if (!Number.isFinite(uid)) {
-      res.status(400).json({ error: 'Bad id' });
+      res.status(400).json({ error: 'Noto‘g‘ri id' });
       return;
     }
     void deps.db.run('UPDATE users SET is_banned=0 WHERE user_id=$1', [uid]).then(() => {

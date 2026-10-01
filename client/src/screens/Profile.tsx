@@ -32,10 +32,10 @@ export function Profile() {
             {profile.username}
           </div>
           <div className="row" style={{ gap: 8, margin: '8px 0' }}>
-            <span className="badge badge-gold">LEVEL {profile.level}</span>
+            <span className="badge badge-gold">DARAJA {profile.level}</span>
             <span className="badge">{profile.coins} 🪙</span>
-            <span className="badge">{profile.reputation} REP</span>
-            {profileOffline && <span className="badge">OFFLINE</span>}
+            <span className="badge">{profile.reputation} OBRO‘</span>
+            {profileOffline && <span className="badge">OFLAYN</span>}
           </div>
           <div className="xp-bar">
             <div style={{ width: `${xpPct}%` }} />
@@ -47,17 +47,17 @@ export function Profile() {
       </div>
 
       <div className="stat-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <div className="stat-box"><div className="v">{profile.games}</div><div className="k">Games</div></div>
-        <div className="stat-box"><div className="v gold">{profile.wins}</div><div className="k">Wins</div></div>
-        <div className="stat-box"><div className="v">{profile.mafiaWins}</div><div className="k">Mafia Wins</div></div>
-        <div className="stat-box"><div className="v">{profile.townWins}</div><div className="k">Town Wins</div></div>
-        <div className="stat-box"><div className="v">{profile.independentWins}</div><div className="k">Indep. Wins</div></div>
-        <div className="stat-box"><div className="v">{profile.winRate}%</div><div className="k">Win Rate</div></div>
-        <div className="stat-box"><div className="v">{profile.bestStreak}</div><div className="k">Best Streak</div></div>
-        <div className="stat-box"><div className="v">{profile.currentStreak}</div><div className="k">Streak</div></div>
+        <div className="stat-box"><div className="v">{profile.games}</div><div className="k">O‘yin</div></div>
+        <div className="stat-box"><div className="v gold">{profile.wins}</div><div className="k">G‘alaba</div></div>
+        <div className="stat-box"><div className="v">{profile.mafiaWins}</div><div className="k">Mafiya g‘.</div></div>
+        <div className="stat-box"><div className="v">{profile.townWins}</div><div className="k">Shahar g‘.</div></div>
+        <div className="stat-box"><div className="v">{profile.independentWins}</div><div className="k">Mustaqil g‘.</div></div>
+        <div className="stat-box"><div className="v">{profile.winRate}%</div><div className="k">Foiz</div></div>
+        <div className="stat-box"><div className="v">{profile.bestStreak}</div><div className="k">Seriya max</div></div>
+        <div className="stat-box"><div className="v">{profile.currentStreak}</div><div className="k">Seriya</div></div>
       </div>
 
-      <div className="label" style={{ marginTop: 4 }}>ACHIEVEMENTS</div>
+      <div className="label" style={{ marginTop: 4 }}>YUTUQLAR</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {ACHIEVEMENTS.map((a) => {
           const has = unlocked.has(a.id);
@@ -68,7 +68,7 @@ export function Profile() {
                 <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{a.name}</div>
                 <div className="dim" style={{ fontSize: '0.8rem' }}>{a.description}</div>
               </div>
-              {has && <span className="badge badge-green">UNLOCKED</span>}
+              {has && <span className="badge badge-green">OCHILGAN</span>}
             </div>
           );
         })}

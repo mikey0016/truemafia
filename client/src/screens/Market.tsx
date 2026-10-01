@@ -29,15 +29,15 @@ export function Market() {
   return (
     <div className="screen">
       <div className="row-between">
-        <div className="h1">MARKET 🛒</div>
+        <div className="h1">BOZOR 🛒</div>
         <span className="badge badge-gold" style={{ fontSize: '0.9rem', padding: '8px 14px' }}>
           {shopBalance} 🪙
         </span>
       </div>
 
       <div className="dim" style={{ fontSize: '0.82rem', marginBottom: 4 }}>
-        Premium aktiv rollar — sotib olsangiz <b>Role draft</b> rejimida tanlay olasiz.
-        O'yin yutib coin yig'ing (g'alaba +25 🪙).
+        Premium aktiv rollar — sotib olsangiz <b>Rol tanlash</b> rejimida tanlay olasiz.
+        O‘yin yutib coin yig‘ing (g‘alaba +25 🪙).
       </div>
 
       {shopLoading && shopItems.length === 0 && (
@@ -67,7 +67,7 @@ export function Market() {
                 disabled={item.owned || buying !== null}
                 onClick={() => void buy(item.id)}
               >
-                {item.owned ? 'OWNED ✓' : buying === item.id ? 'BUYING…' : `BUY — ${item.price} 🪙`}
+                {item.owned ? 'SIZNIKI ✓' : buying === item.id ? 'OLINMOQDA…' : `OLISH — ${item.price} 🪙`}
               </button>
             </div>
           );

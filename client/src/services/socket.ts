@@ -37,7 +37,7 @@ function sendAuth(): void {
       if (!res.ok) {
         // Sababini UI'da ko'rsatamiz — "Authenticate first" topishmoq bo'lmasligi uchun
         import('../store/gameStore').then(({ useGameStore }) => {
-          useGameStore.getState().pushToast('error', `Auth: ${res.error ?? 'failed'}`);
+          useGameStore.getState().pushToast('error', `Kirish xatosi: ${res.error ?? 'bajarilmadi'}`);
         });
         console.warn('[true-mafia] socket auth failed:', res.error);
       }

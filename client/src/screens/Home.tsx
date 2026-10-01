@@ -32,14 +32,14 @@ export function Home() {
             {tgName}
           </div>
           <div className="row" style={{ gap: 8, margin: '7px 0' }}>
-            <span className="badge badge-gold">★ LEVEL {level}</span>
+            <span className="badge badge-gold">★ DARAJA {level}</span>
             <span className="badge">{profile ? `${profile.coins} 🪙` : '— 🪙'}</span>
           </div>
           <div className="xp-bar">
             <div style={{ width: `${xpPct}%` }} />
           </div>
           <div className="label" style={{ marginTop: 5 }}>
-            {profile ? `${profile.xp} / ${profile.xpToNext} XP` : 'LOADING…'}
+            {profile ? `${profile.xp} / ${profile.xpToNext} XP` : 'YUKLANMOQDA…'}
           </div>
         </div>
       </div>
@@ -57,9 +57,9 @@ export function Home() {
         }}
       >
         <div style={{ fontSize: '2.1rem', marginBottom: 2 }}>🎭</div>
-        <div className="play-title">PLAY</div>
+        <div className="play-title">O‘YNASH</div>
         <div className="label" style={{ color: 'var(--text-dim)', marginTop: 8, letterSpacing: '0.2em' }}>
-          FIND A GAME
+          O‘YIN TOPISH
         </div>
       </button>
 
@@ -75,7 +75,7 @@ export function Home() {
           }}
         >
           <span style={{ fontSize: '1.3rem' }}>✨</span>
-          <span style={{ fontSize: '0.8rem' }}>CREATE ROOM</span>
+          <span style={{ fontSize: '0.8rem' }}>XONA OCHISH</span>
         </button>
         <button
           className="btn card-press"
@@ -87,7 +87,7 @@ export function Home() {
           }}
         >
           <span style={{ fontSize: '1.3rem' }}>🚪</span>
-          <span style={{ fontSize: '0.8rem' }}>JOIN ROOM</span>
+          <span style={{ fontSize: '0.8rem' }}>XONAGA KIRISH</span>
         </button>
       </div>
 
@@ -95,15 +95,15 @@ export function Home() {
       <div className="stat-grid">
         <div className="stat-box">
           <div className="v gold">🏆 {profile?.wins ?? 0}</div>
-          <div className="k">Wins</div>
+          <div className="k">G‘alaba</div>
         </div>
         <div className="stat-box">
           <div className="v">🎮 {profile?.games ?? 0}</div>
-          <div className="k">Games</div>
+          <div className="k">O‘yin</div>
         </div>
         <div className="stat-box">
           <div className="v">{profile ? `${profile.winRate}%` : '—'}</div>
-          <div className="k">Winrate</div>
+          <div className="k">Foiz</div>
         </div>
       </div>
 
@@ -112,12 +112,12 @@ export function Home() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {(
           [
-            ['PROFILE', 'profile', '👤'],
+            ['PROFIL', 'profile', '👤'],
             ['MARKET', 'market', '🛒'],
-            ['HISTORY', 'history', '📜'],
-            ['LEADERBOARD', 'leaderboard', '🏆'],
-            ['ACHIEVEMENTS', 'achievements', '🎖️'],
-            ['SETTINGS', 'settings', '⚙️'],
+            ['TARIX', 'history', '📜'],
+            ['REYTING', 'leaderboard', '🏆'],
+            ['YUTUQLAR', 'achievements', '🎖️'],
+            ['SOZLAMALAR', 'settings', '⚙️'],
           ] as const
         ).map(([label, target, icon]) => (
           <button
@@ -137,7 +137,7 @@ export function Home() {
           </button>
         ))}
       </div>
-      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.2.0</div>
+      <div className="ghost-chat-note" style={{ textAlign: 'center', marginTop: 12 }}>v1.3.0</div>
     </div>
   );
 }
