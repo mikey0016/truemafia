@@ -3,8 +3,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
-// Load .env from cwd, then fall back to the repo root (npm workspace runs set cwd to server/).
+// Load .env: cwd (root yoki server workspace) + repo root (__dirname'dan).
 dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 import express from 'express';
 import cors from 'cors';
@@ -18,9 +19,12 @@ import { RoomManager } from './game/roomManager.js';
 import { createSocketServer } from './websocket/handler.js';
 import { createApiRouter } from './routes/api.js';
 import { authMiddleware } from './middleware/auth.js';
+import { startTelegramBot } from './bot/bot.js';
 import type { BotController } from './game/bots.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// tsx'da cwd server/ bo'lishi mumkin — repo root'dagi .env'ni ham yuklash
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 async function main(): Promise<void> {
   await loadTsx();
@@ -73,8 +77,12 @@ async function main(): Promise<void> {
     console.log(`[true-mafia] server listening on :${port}`);
   });
 
+  // Telegram bot: /start -> info + Mini App tugmasi (BOT_TOKEN bo'lsa polling)
+  const stopBot = startTelegramBot();
+
   const shutdown = async () => {
     console.log('[true-mafia] shutting down...');
+    stopBot();
     rooms.dispose();
     for (const room of rooms.rooms.values()) room.engine.dispose();
     db.close();

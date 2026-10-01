@@ -17,6 +17,8 @@ services:
       - key: DATABASE_URL
         sync: false # Neon Postgres connection string
       - key: BOT_TOKEN
-        sync: false # Telegram bot token
+        sync: false # Telegram bot token (/start javobi + initData tekshiruvi)
+      - key: WEBAPP_URL
+        value: https://mikey0016.github.io/truemafia/ # /start dagi O'ynash tugmasi
       - key: ADMIN_IDS
         sync: false # vergul bilan ajratilgan admin Telegram ID'lari
