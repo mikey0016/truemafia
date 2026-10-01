@@ -3,12 +3,12 @@ import { MAX_PLAYERS, MIN_PLAYERS, PLAYER_COUNT_OPTIONS } from '@truemafia/share
 import type { RoomSettings } from '@truemafia/shared';
 import { useGameStore } from '../store/gameStore';
 import { Icon } from '../components/Icon';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { getSocket } from '../services/socket';
 import { haptic, hapticNotify } from '../services/telegram';
 import { playSound } from '../services/sound';
 
 export function Create() {
-  const navigate = useGameStore((s) => s.navigate);
   const pushToast = useGameStore((s) => s.pushToast);
   const [settings, setSettings] = useState<Partial<RoomSettings>>({
     gameType: 'CLASSIC',
@@ -66,12 +66,7 @@ export function Create() {
 
   return (
     <div className="screen">
-      <div className="row-between">
-        <button className="btn btn-ghost" style={{ minHeight: 0, padding: '9px 13px' }} onClick={() => navigate('home')}>
-          <Icon name="back" size={16} />
-        </button>
-        <div className="h1" style={{ flex: 1, textAlign: 'center', marginRight: 52 }}>XONA OCHISH</div>
-      </div>
+      <ScreenHeader title="XONA OCHISH" />
 
       <div className="card">
         <div className="label" style={{ marginBottom: 10 }}>O‘YINCHILAR</div>

@@ -1,5 +1,6 @@
 import { ACHIEVEMENTS } from '@truemafia/shared';
 import { useGameStore } from '../store/gameStore';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 export function Achievements() {
   const profile = useGameStore((s) => s.profile);
@@ -8,7 +9,7 @@ export function Achievements() {
 
   return (
     <div className="screen">
-      <div className="h1">YUTUQLAR</div>
+      <ScreenHeader title="YUTUQLAR" />
       <div className="dim" style={{ fontSize: '0.85rem' }}>
         {unlocked.size}/{ACHIEVEMENTS.length} ochilgan
       </div>

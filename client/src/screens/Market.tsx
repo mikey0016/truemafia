@@ -3,6 +3,7 @@ import { ROLES, type ShopItem } from '@truemafia/shared';
 import { useGameStore } from '../store/gameStore';
 import { Avatar } from '../components/Avatar';
 import { Icon } from '../components/Icon';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { haptic, hapticNotify } from '../services/telegram';
 import { playSound } from '../services/sound';
 
@@ -45,11 +46,12 @@ export function Market() {
 
   return (
     <div className="screen">
+      <ScreenHeader title="BOZOR" />
       <div className="row-between">
-        <div className="h1">BOZOR</div>
         <span className="badge badge-gold" style={{ fontSize: '0.9rem', padding: '8px 14px' }}>
           {shopBalance} 🪙
         </span>
+        <span className="badge">G‘ALABA +25 🪙</span>
       </div>
 
       <div className="dim" style={{ fontSize: '0.8rem' }}>

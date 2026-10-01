@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { ROLES } from '@truemafia/shared';
 import { useGameStore } from '../store/gameStore';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 function formatWhen(ts: number): string {
   const d = new Date(ts);
@@ -28,7 +29,7 @@ export function History() {
 
   return (
     <div className="screen">
-      <div className="h1">TARIX</div>
+      <ScreenHeader title="TARIX" />
 
       {historyLoading ? (
         <>

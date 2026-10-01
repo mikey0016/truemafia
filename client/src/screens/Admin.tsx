@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Icon } from '../components/Icon';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { haptic } from '../services/telegram';
 
 type Tab = 'stats' | 'rooms' | 'users' | 'broadcast';
@@ -18,7 +19,6 @@ const PHASE_LABEL: Record<string, string> = {
 };
 
 export function Admin() {
-  const navigate = useGameStore((s) => s.navigate);
   const {
     adminStats,
     adminRooms,
@@ -65,12 +65,7 @@ export function Admin() {
 
   return (
     <div className="screen">
-      <div className="row-between">
-        <button className="btn btn-ghost" style={{ minHeight: 0, padding: '9px 13px' }} onClick={() => navigate('home')}>
-          <Icon name="back" size={16} />
-        </button>
-        <div className="h1" style={{ flex: 1, textAlign: 'center', marginRight: 52 }}>⚙️ ADMIN</div>
-      </div>
+      <ScreenHeader title="ADMIN" />
 
       <div className="tabbar">
         {(

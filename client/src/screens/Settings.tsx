@@ -3,6 +3,7 @@ import { setSoundEnabled, setVibrationEnabled, loadSoundPrefs } from '../service
 import { getInitData } from '../services/telegram';
 import { getBackendUrl, setBackendUrl } from '../config';
 import { getSocket } from '../services/socket';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 export function Settings() {
   const [prefs, setPrefs] = useState(loadSoundPrefs());
@@ -18,7 +19,7 @@ export function Settings() {
 
   return (
     <div className="screen">
-      <div className="h1">SOZLAMALAR</div>
+      <ScreenHeader title="SOZLAMALAR" />
 
       <div className="card">
         <div className="toggle-row">

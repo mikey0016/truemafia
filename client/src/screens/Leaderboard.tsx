@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Avatar } from '../components/Avatar';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 type Range = 'GLOBAL' | 'WEEKLY' | 'MONTHLY';
 
@@ -14,7 +15,7 @@ export function Leaderboard() {
 
   return (
     <div className="screen">
-      <div className="h1">REYTING</div>
+      <ScreenHeader title="REYTING" />
       <div className="tabbar">
         {(['GLOBAL', 'WEEKLY', 'MONTHLY'] as Range[]).map((r) => (
           <button key={r} className={range === r ? 'active' : ''} onClick={() => setRange(r)}>

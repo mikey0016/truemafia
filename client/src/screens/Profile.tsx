@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { ACHIEVEMENTS } from '@truemafia/shared';
 import { useGameStore } from '../store/gameStore';
 import { Avatar } from '../components/Avatar';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 export function Profile() {
   const { profile, profileLoading, profileOffline, tgName, tgPhoto, loadProfile } = useGameStore();
@@ -25,6 +26,7 @@ export function Profile() {
 
   return (
     <div className="screen">
+      <ScreenHeader title="PROFIL" />
       <div className="row" style={{ gap: 14 }}>
         <Avatar src={profile.photoUrl ?? tgPhoto} name={profile.username} size="lg" frame={profile.frame} />
         <div style={{ flex: 1, minWidth: 0 }}>
