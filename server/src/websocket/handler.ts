@@ -113,6 +113,12 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         const initData = typeof payload === 'string' ? payload : payload?.initData || '';
         const botToken = process.env.BOT_TOKEN || '';
         let u = botToken ? validateInitData(initData, botToken) : null;
+        let failReason = '';
+        if (!u) {
+          if (!botToken) failReason = 'no server token';
+          else if (!initData) failReason = 'empty initData';
+          else failReason = 'bad signature';
+        }
         if (!u && process.env.DEV_SKIP_AUTH === '1' && process.env.NODE_ENV !== 'production') {
           u = parseInitDataInsecure(initData) || {
             userId: 1,
@@ -127,10 +133,12 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
           if (typeof gid === 'number' && Number.isSafeInteger(gid) && gid < 0 && gid > -1e12) {
             const gname = String(payload.guestName || '').slice(0, 24) || `Guest${-gid % 10000}`;
             u = { userId: gid, username: gname, displayName: gname, authDate: Date.now(), isGuest: true };
+          } else {
+            failReason += (failReason ? '+' : '') + 'no guest id';
           }
         }
         if (!u) {
-          ack?.({ ok: false, error: 'Invalid auth' });
+          ack?.({ ok: false, error: `Invalid auth (${failReason || 'unknown'})` });
           return;
         }
         socket.data.userId = u.userId;

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getSocket } from '../services/socket';
+import { getSocket, reauth } from '../services/socket';
 import { useGameStore } from '../store/gameStore';
 import { playSound, vibrate } from '../services/sound';
 import { setBackButton, haptic, hapticNotify } from '../services/telegram';
@@ -98,7 +98,9 @@ export function useSocketBridge(): void {
       if (msg.senderId !== useGameStore.getState().tgUserId) playSound('notify');
     });
 
-    socket.on('room:error', ({ message }) => {
+    socket.on('room:error', ({ code, message }) => {
+      // Auth eskirgan bo'lsa (server restart) — bir marta yangilab ko'ramiz
+      if (code === 'UNAUTHENTICATED') reauth();
       useGameStore.getState().pushToast('error', message);
     });
 
