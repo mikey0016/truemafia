@@ -52,6 +52,28 @@ async function main(): Promise<void> {
   rooms.startCleanupLoop();
 
   app.get('/api/health', (_req, res) => res.json({ ok: true, time: Date.now() }));
+
+  // Ochiq xonalar — auth'siz (Find a game ro'yxati uchun).
+  // Auth talab qilinadigan router'dan OLDIN turishi shart.
+  app.get('/api/rooms', (_req, res) => {
+    const list = [...rooms.rooms.values()]
+      .filter((r) => {
+        const e = r.engine;
+        return (
+          !e.settings.privateRoom && e.phase === 'LOBBY' && e.players.length < e.settings.playerCount
+        );
+      })
+      .sort((a, b) => a.engine.startedAtTime - b.engine.startedAtTime)
+      .slice(0, 20)
+      .map((r) => ({
+        code: r.engine.code,
+        players: r.engine.players.length,
+        maxPlayers: r.engine.settings.playerCount,
+        phase: r.engine.phase,
+      }));
+    res.json({ rooms: list });
+  });
+
   app.use('/api', authMiddleware, createApiRouter({ db, users, rooms }));
 
   // SPA fallback: built client'dagi barcha no-API route'lar index.html ga qaytadi

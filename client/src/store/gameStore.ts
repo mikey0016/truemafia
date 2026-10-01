@@ -42,6 +42,13 @@ export interface Toast {
   message: string;
 }
 
+export interface OpenRoom {
+  code: string;
+  players: number;
+  maxPlayers: number;
+  phase: string;
+}
+
 interface GameState {
   // navigation
   screen: Screen;
@@ -59,6 +66,7 @@ interface GameState {
   // profile
   profile: ProfileStats | null;
   profileLoading: boolean;
+  profileError: string | null;
   loadProfile: () => Promise<void>;
 
   // room / lobby
@@ -104,6 +112,12 @@ interface GameState {
   history: GameHistoryEntry[];
   historyLoading: boolean;
   loadHistory: () => Promise<void>;
+
+  // open rooms (find a game)
+  openRooms: OpenRoom[];
+  openRoomsLoading: boolean;
+  openRoomsError: string | null;
+  loadOpenRooms: () => Promise<void>;
 }
 
 let toastSeq = 1;
@@ -128,14 +142,20 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   profile: null,
   profileLoading: false,
+  profileError: null,
   loadProfile: async () => {
-    set({ profileLoading: true });
+    set({ profileLoading: true, profileError: null });
     try {
       const res = await apiFetch('/api/me');
+      if (!res.ok) throw new Error(res.status === 401 ? 'Unauthorized' : `HTTP ${res.status}`);
       const json = (await res.json()) as { profile: ProfileStats | null };
-      set({ profile: json.profile, profileLoading: false });
-    } catch {
-      set({ profileLoading: false });
+      if (!json.profile) throw new Error('Empty profile');
+      set({ profile: json.profile, profileLoading: false, profileError: null });
+    } catch (e) {
+      set({
+        profileLoading: false,
+        profileError: e instanceof Error ? e.message : 'Network error',
+      });
     }
   },
 
@@ -203,6 +223,24 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ history: json.history ?? [], historyLoading: false });
     } catch {
       set({ historyLoading: false });
+    }
+  },
+
+  openRooms: [],
+  openRoomsLoading: false,
+  openRoomsError: null,
+  loadOpenRooms: async () => {
+    set({ openRoomsLoading: true, openRoomsError: null });
+    try {
+      const res = await apiFetch('/api/rooms');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as { rooms: OpenRoom[] };
+      set({ openRooms: json.rooms ?? [], openRoomsLoading: false });
+    } catch (e) {
+      set({
+        openRoomsLoading: false,
+        openRoomsError: e instanceof Error ? e.message : 'Network error',
+      });
     }
   },
 }));

@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { getSocket } from '../services/socket';
 import { useGameStore } from '../store/gameStore';
 import { playSound, vibrate } from '../services/sound';
-import { getTgUser, setBackButton, haptic, hapticNotify } from '../services/telegram';
+import { setBackButton, haptic, hapticNotify } from '../services/telegram';
+import { getIdentity } from '../services/identity';
 
 let bridgeInstalled = false;
 
@@ -94,17 +95,16 @@ export function useSocketBridge(): void {
 
     socket.on('chat:message', (msg) => {
       useGameStore.getState().pushChat(msg);
-      if (msg.senderId !== getTgUser()?.id) playSound('notify');
+      if (msg.senderId !== useGameStore.getState().tgUserId) playSound('notify');
     });
 
     socket.on('room:error', ({ message }) => {
       useGameStore.getState().pushToast('error', message);
     });
 
-    const user = getTgUser();
-    if (user) {
-      st.setIdentity(user.id, user.username || user.first_name || 'Player', user.photo_url);
-    }
+    // Telegram bo'lsa — real user, bo'lmasa — mehmon (avatar harfi ko'rinadi)
+    const me = getIdentity();
+    st.setIdentity(me.id ?? 0, me.name, me.photo);
   }, []);
 
   // BackButton per screen

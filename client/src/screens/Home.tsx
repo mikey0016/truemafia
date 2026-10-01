@@ -5,11 +5,11 @@ import { haptic } from '../services/telegram';
 import { playSound, unlockAudio } from '../services/sound';
 
 export function Home() {
-  const { profile, tgName, tgPhoto, loadProfile, navigate } = useGameStore();
+  const { profile, profileLoading, tgName, tgPhoto, loadProfile, navigate } = useGameStore();
 
   useEffect(() => {
-    void loadProfile();
-  }, [loadProfile]);
+    if (profile === null && !profileLoading) void loadProfile();
+  }, [loadProfile, profile, profileLoading]);
 
   const level = profile?.level ?? 1;
   const xpPct = profile ? Math.min(100, Math.round((profile.xp / Math.max(1, profile.xpToNext)) * 100)) : 0;
@@ -26,7 +26,7 @@ export function Home() {
           navigate('profile');
         }}
       >
-        <Avatar src={tgPhoto} name={tgName} size="lg" />
+        <Avatar src={profile?.photoUrl ?? tgPhoto} name={tgName} size="lg" />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="h2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {tgName}

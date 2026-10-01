@@ -4,18 +4,45 @@ import { useGameStore } from '../store/gameStore';
 import { Avatar } from '../components/Avatar';
 
 export function Profile() {
-  const { profile, tgName, tgPhoto, loadProfile } = useGameStore();
+  const { profile, profileLoading, profileError, tgName, tgPhoto, loadProfile } = useGameStore();
 
   useEffect(() => {
-    void loadProfile();
-  }, [loadProfile]);
+    if (profile === null && !profileLoading) void loadProfile();
+  }, [loadProfile, profile, profileLoading]);
 
-  if (profile === null) {
+  if (profileLoading && profile === null) {
     return (
       <div className="screen">
         <div className="skeleton" style={{ height: 120 }} />
         <div className="skeleton" style={{ height: 160 }} />
         <div className="skeleton" style={{ height: 220 }} />
+      </div>
+    );
+  }
+
+  if (profile === null) {
+    return (
+      <div className="screen">
+        <div className="row" style={{ gap: 14 }}>
+          <Avatar src={tgPhoto} name={tgName} size="lg" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="h2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {tgName}
+            </div>
+            <div className="label" style={{ marginTop: 4 }}>GUEST MODE</div>
+          </div>
+        </div>
+        <div className="card" style={{ borderColor: 'var(--danger, #e5484d)' }}>
+          <div className="h2">Profil yuklanmadi</div>
+          <div className="dim" style={{ fontSize: '0.85rem', margin: '8px 0' }}>
+            {profileError === 'Unauthorized'
+              ? "Serverga ulanib bo'lmadi (auth). Telegram Mini App ichida yoki backend URL to'g'ri sozlanganda oching."
+              : `Xato: ${profileError ?? 'Network error'}. Backend (VITE_BACKEND_URL) sozlanmagan bo'lishi mumkin.`}
+          </div>
+          <button className="btn btn-primary btn-block" onClick={() => void loadProfile()}>
+            QAYTA URINISH
+          </button>
+        </div>
       </div>
     );
   }
