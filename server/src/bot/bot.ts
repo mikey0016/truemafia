@@ -26,7 +26,7 @@ interface TgUpdate {
   };
 }
 
-const START_TEXT = `🎭 <b>True Mafia — Telegram Mini App</b>
+const START_TEXT = `🎭 <b>Nightfall Mafia — Telegram Mini App</b>
 
 Ko'p o'yinchili «Mafiya» o'yini: do'stlaringiz bilan xona yarating, rol oling, tunda harakat qiling, kunduzi ovoz bering!
 
@@ -47,7 +47,7 @@ LOBBY → NIGHT → DAY → DISCUSSION → VOTING → GAME_OVER
 
 Pastdagi tugma orqali o'yinga kiring 👇`;
 
-const RULES_TEXT = `📖 <b>True Mafia — qisqacha qoidalar</b>
+const RULES_TEXT = `📖 <b>Nightfall Mafia — qisqacha qoidalar</b>
 
 1️⃣ Xona yarating yoki kod orqali qo'shiling (4–15 kishi).
 2️⃣ <b>ROLE_REVEAL</b> — rolingizni maxfiy saqlang.

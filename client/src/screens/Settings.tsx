@@ -57,7 +57,7 @@ export function Settings() {
       <div className="card">
         <div className="label" style={{ marginBottom: 6 }}>BACKEND URL</div>
         <div className="dim" style={{ fontSize: '0.8rem', marginBottom: 8 }}>
-          Render’dagi server manzili. Masalan: https://truemafia.onrender.com
+          Render’dagi server manzili. Masalan: https://truemafia-gwgv.onrender.com
         </div>
         <input
           value={backend}
@@ -76,7 +76,7 @@ export function Settings() {
       </div>
 
       <div className="spacer" />
-      <div className="ghost-chat-note">TRUE MAFIA · v1.3.0</div>
+      <div className="ghost-chat-note">NIGHTFALL MAFIA · v1.3.1</div>
     </div>
   );
 }

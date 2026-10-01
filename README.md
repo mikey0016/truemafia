@@ -1,4 +1,4 @@
-# True Mafia 🎭
+# Nightfall Mafia 🎭
 
 Telegram Mini App orqali o'ynaladigan ko'p o'yinchili «Mafiya» o'yini. Real vaqt rejimida ovoz berish, tungi harakatlar, botlar va to'liq statistika bilan.
 
