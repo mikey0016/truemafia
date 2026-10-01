@@ -134,18 +134,32 @@ function NightPhase({ snapshot, secondsLeft }: { snapshot: GameSnap; secondsLeft
   const canAct = !!myRole?.nightAction && snapshot.you.alive;
   const actionDone = snapshot.you.hasActed;
   const isMafiaTeam = myRole && (snapshot.you.role === 'MAFIA' || snapshot.you.role === 'DON');
+  const isDetective = snapshot.you.role === 'DETECTIVE';
+  const shotLeft = snapshot.you.shotLeft === true;
+  const [pendingTarget, setPendingTarget] = useState<PlayerCardView | null>(null);
 
-  const select = (target: PlayerCardView) => {
-    if (!canAct || actionDone || !target.alive || target.userId === snapshot.you.userId) return;
+  const doAction = (targetId: number, mode?: 'kill' | 'investigate') => {
     haptic('medium');
-    getSocket().emit('game:action', { targetId: target.userId }, (res) => {
+    setPendingTarget(null);
+    getSocket().emit('game:action', { targetId, ...(mode ? { mode } : {}) }, (res) => {
       if (!res.ok) {
         hapticNotify('error');
-          useGameStore.getState().pushToast('error', res.error ?? 'Harakat bajarilmadi');
+        useGameStore.getState().pushToast('error', res.error ?? 'Harakat bajarilmadi');
       } else {
         playSound('click');
       }
     });
+  };
+
+  const select = (target: PlayerCardView) => {
+    if (!canAct || actionDone || !target.alive || target.userId === snapshot.you.userId) return;
+    // Detektiv o‘qi bor bo‘lsa — avval OTASIZMI yoki TEKSHIRASIZMI deb so‘raymiz
+    if (isDetective && shotLeft) {
+      haptic('light');
+      setPendingTarget(target);
+      return;
+    }
+    doAction(target.userId);
   };
 
   const isSelectable = (p: PlayerCardView): boolean => {
@@ -171,7 +185,7 @@ function NightPhase({ snapshot, secondsLeft }: { snapshot: GameSnap; secondsLeft
                 {myRole?.actionKind === 'kill' && (isMafiaTeam ? 'NISHONNI TANLANG — YO‘Q QILING' : 'O‘LDIRISH')}
                 {myRole?.actionKind === 'protect' && 'O‘YINCHINI HIMOYA QILING'}
                 {myRole?.actionKind === 'save' && 'O‘YINCHINI QO‘RIQLANG'}
-                {myRole?.actionKind === 'investigate' && 'O‘YINCHINI TEKSHIRING'}
+                {myRole?.actionKind === 'investigate' && (isDetective && shotLeft ? 'TEKSHIRISH YOKI OTISH 🔫' : 'O‘YINCHINI TEKSHIRING')}
               </span>
               <span className="timer mono" style={{ fontSize: '0.9rem' }}>{formatTime(secondsLeft)}</span>
             </div>
@@ -198,6 +212,33 @@ function NightPhase({ snapshot, secondsLeft }: { snapshot: GameSnap; secondsLeft
       </div>
 
       {isMafiaTeam && <Chat snapshot={snapshot} />}
+
+      {pendingTarget && (
+        <Overlay>
+          <div className="card-strong" style={{ textAlign: 'center', padding: 26, maxWidth: 300 }}>
+            <div style={{ fontSize: '2.2rem' }}>🎯</div>
+            <div className="h2" style={{ margin: '8px 0 2px' }}>{pendingTarget.displayName}</div>
+            <div className="label gold" style={{ marginBottom: 14 }}>NIMA QILASIZ?</div>
+            <button
+              className="btn btn-block"
+              style={{ marginBottom: 8 }}
+              onClick={() => doAction(pendingTarget.userId, 'investigate')}
+            >
+              🔍 TEKSHIRISH
+            </button>
+            <button
+              className="btn btn-primary btn-block"
+              style={{ marginBottom: 8 }}
+              onClick={() => doAction(pendingTarget.userId, 'kill')}
+            >
+              🔫 OTISH (1 o‘q)
+            </button>
+            <button className="btn btn-ghost btn-block" onClick={() => setPendingTarget(null)}>
+              BEKOR QILISH
+            </button>
+          </div>
+        </Overlay>
+      )}
     </>
   );
 }

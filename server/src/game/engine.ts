@@ -55,6 +55,8 @@ export class GameEngine {
   private snapshotTimer: NodeJS.Timeout | null = null;
   /** Karta tanlash rejimi: userId -> tanlangan rol (lobby, ochiq draft) */
   private rolePicks = new Map<number, RoleId>();
+  /** Detektivning ishlatilgan bir martalik o‘qlari */
+  private detectiveShots = new Set<number>();
   /** Ketma-ket "o'lik" raundlar (na o'lim, na ovoz, na tungi harakat) — stall himoyasi */
   private stallRounds = 0;
 
@@ -280,25 +282,42 @@ export class GameEngine {
     this.beginPhaseTimer(this.settings.nightSeconds * 1000, () => this.resolveNight());
   }
 
-  submitNightAction(userId: number, targetId: number): { ok: boolean; error?: string } {
+  submitNightAction(
+    userId: number,
+    targetId: number,
+    mode?: 'kill' | 'investigate',
+  ): { ok: boolean; error?: string } {
     const actor = this.players.find((p) => p.userId === userId);
     if (!actor) return { ok: false, error: 'O‘yinda emassiz' };
     if (this.phase !== 'NIGHT') return { ok: false, error: 'Hozir tun emas' };
     if (!actor.alive) return { ok: false, error: 'O‘lganlar harakat qilolmaydi' };
     const def = ROLES[actor.role];
     if (!def.nightAction || !def.actionKind) return { ok: false, error: 'Rolingizda tungi harakat yo‘q' };
+    let kind = def.actionKind;
+    if (actor.role === 'DETECTIVE') {
+      if (mode === 'kill') {
+        if (this.detectiveShots.has(userId)) return { ok: false, error: 'O‘qingiz tugagan' };
+        kind = 'kill';
+        this.detectiveShots.add(userId);
+      } else if (mode !== undefined && mode !== 'investigate') {
+        return { ok: false, error: 'Noto‘g‘ri harakat' };
+      }
+    } else if (mode !== undefined && mode !== def.actionKind) {
+      return { ok: false, error: 'Noto‘g‘ri harakat' };
+    }
     const target = this.players.find((p) => p.userId === targetId);
     if (!target || !target.alive) return { ok: false, error: 'Noto‘g‘ri nishon' };
 
     // mafia cannot target mafia; doctor self-heal allowed once? keep simple: self-protect allowed
-    if (def.actionKind === 'kill' && actor.role !== 'SERIAL_KILLER') {
+    // (detektiv va seriyali qotil kimnidir nishonga olsa bo'ladi)
+    if (kind === 'kill' && isMafia(actor.role)) {
       if (isMafia(target.role)) return { ok: false, error: 'O‘z oilangizga tegolmaysiz' };
     }
-    if ((def.actionKind === 'protect' || def.actionKind === 'save') && actor.lastNightTarget === targetId) {
+    if ((kind === 'protect' || kind === 'save') && actor.lastNightTarget === targetId) {
       return { ok: false, error: 'Bir kishini ikki tun ketma-ket himoyalab bo‘lmaydi' };
     }
 
-    this.nightActions.set(userId, { actorId: userId, kind: def.actionKind, targetId });
+    this.nightActions.set(userId, { actorId: userId, kind, targetId });
     this.hooks.onPhaseChanged();
     this.maybeAutoResolveNight();
     return { ok: true };
@@ -329,6 +348,9 @@ export class GameEngine {
     const skActions = [...this.nightActions.values()].filter(
       (a) => a.kind === 'kill' && this.players.find((p) => p.userId === a.actorId)?.role === 'SERIAL_KILLER',
     );
+    const detActions = [...this.nightActions.values()].filter(
+      (a) => a.kind === 'kill' && this.players.find((p) => p.userId === a.actorId)?.role === 'DETECTIVE',
+    );
 
     // Don's target wins ties; otherwise first submitted
     let mafiaTarget: number | null = null;
@@ -350,6 +372,7 @@ export class GameEngine {
     const killTargets = new Set<number>();
     if (mafiaTarget !== null) killTargets.add(mafiaTarget);
     for (const a of skActions) killTargets.add(a.targetId);
+    for (const a of detActions) killTargets.add(a.targetId);
 
     for (const targetId of killTargets) {
       const target = this.players.find((p) => p.userId === targetId);
@@ -787,6 +810,7 @@ export class GameEngine {
         role: you && this.phase !== 'LOBBY' ? you.role : null,
         hasActed: this.nightActions.has(userId) || (this.phase === 'VOTING' && this.votes.has(userId)),
         investigations: you?.investigations ?? [],
+        shotLeft: you?.role === 'DETECTIVE' && !this.detectiveShots.has(userId),
       },
       players,
       chat: myChannel,

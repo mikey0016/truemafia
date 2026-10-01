@@ -8,13 +8,14 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "npm run test:engine && npm run test:recorder && npm run test:auth && npm run test:draft && npm run test:win && npm run test:shop",
+    "test": "npm run test:engine && npm run test:recorder && npm run test:auth && npm run test:draft && npm run test:win && npm run test:shop && npm run test:detective",
     "test:engine": "tsx src/engine/engine.test.ts",
     "test:win": "tsx src/game/win.test.ts",
     "test:draft": "tsx src/game/draft.test.ts",
     "test:recorder": "tsx src/recorder/gameRecorder.test.ts",
     "test:auth": "tsx src/auth/auth.test.ts",
-    "test:shop": "tsx src/services/shop.test.ts"
+    "test:shop": "tsx src/services/shop.test.ts",
+    "test:detective": "tsx src/game/detective.test.ts"
   },
   "dependencies": {
     "@truemafia/shared": "*",

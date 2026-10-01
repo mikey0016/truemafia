@@ -204,7 +204,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       const settingsBots = clampInt(settings.botCount ?? 0, 0, 14, 0);
       const demoBots = clampInt(payload?.demoBots ?? 0, 0, 14, 0);
       if (demoBots > 0 && !isDemoAllowed()) {
-        ack?.({ ok: false, error: 'Demo rejim o�chiq' });
+        ack?.({ ok: false, error: 'Demo rejim o’chiq' });
         return;
       }
       const totalBots = Math.min(14, settingsBots + demoBots);
@@ -236,7 +236,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       if (!requireAuth()) return;
       const res = deps.roomManager.quickJoin({ ...me() });
       if (!res.ok || !res.code) {
-        ack?.({ ok: false, error: res.error ?? 'Xonalar yo�q' });
+        ack?.({ ok: false, error: res.error ?? 'Xonalar yo’q' });
         return;
       }
       joinRoomSocket(res.code);
@@ -310,7 +310,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
             ? (raw.toUpperCase() as import('@truemafia/shared').RoleId)
             : null;
       if (roleId !== null && !/^[A-Z_]+$/.test(roleId)) {
-        ack?.({ ok: false, error: 'Noto�g�ri rol' });
+        ack?.({ ok: false, error: 'Noto’g’ri rol' });
         return;
       }
       // Premium aktiv rollar — faqat marketdan sotib olganlar tanlay oladi
@@ -356,11 +356,24 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       }
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'O�yinda emassiz' });
+        ack?.({ ok: false, error: 'O’yinda emassiz' });
         return;
       }
       const targetId = clampInt(payload?.targetId, -1, 2 ** 53, -1);
-      const res = room.engine.submitNightAction(me().userId, targetId);
+      const rawMode = payload?.mode;
+      const mode =
+        rawMode === undefined || rawMode === null
+          ? undefined
+          : rawMode === 'kill'
+            ? ('kill' as const)
+            : rawMode === 'investigate'
+              ? ('investigate' as const)
+              : null;
+      if (mode === null) {
+        ack?.({ ok: false, error: 'Noto‘g‘ri harakat' });
+        return;
+      }
+      const res = room.engine.submitNightAction(me().userId, targetId, mode);
       ack?.(res.ok ? { ok: true } : { ok: false, error: res.error });
     });
 
@@ -372,7 +385,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       }
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'O�yinda emassiz' });
+        ack?.({ ok: false, error: 'O’yinda emassiz' });
         return;
       }
       const targetId = clampInt(payload?.targetId, -1, 2 ** 53, -1);
@@ -384,7 +397,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       if (!requireAuth()) return;
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'O�yinda emassiz' });
+        ack?.({ ok: false, error: 'O’yinda emassiz' });
         return;
       }
       room.engine.requestContinue(me().userId);
@@ -399,7 +412,7 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
       }
       const room = findMyRoom();
       if (!room) {
-        ack?.({ ok: false, error: 'O�yinda emassiz' });
+        ack?.({ ok: false, error: 'O’yinda emassiz' });
         return;
       }
       const channel: ChatMessage['channel'] =

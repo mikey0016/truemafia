@@ -69,7 +69,7 @@ export class RoomManager {
         );
       })
       .sort((a, b) => a.engine.startedAtTime - b.engine.startedAtTime);
-    if (candidates.length === 0) return { ok: false, error: 'Ochiq xona yo‘q. Yarating!' };
+    if (candidates.length === 0) return { ok: false, error: 'Ochiq xona yoâ€™q. Yarating!' };
     const target = candidates[0].engine;
     const res = target.addPlayer(user);
     if (!res.ok) return { ok: false, error: res.error };
@@ -81,7 +81,7 @@ export class RoomManager {
     if (!room) return { ok: false, error: 'Xona topilmadi' };
     const e = room.engine;
     if (!e.players.some((p) => p.userId === user.userId)) {
-      if (e.phase !== 'LOBBY') return { ok: false, error: 'O‘yin allaqachon boshlangan' };
+      if (e.phase !== 'LOBBY') return { ok: false, error: 'Oâ€™yin allaqachon boshlangan' };
       const res = e.addPlayer(user);
       if (!res.ok) return { ok: false, error: res.error };
     }

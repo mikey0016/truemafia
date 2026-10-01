@@ -76,7 +76,7 @@ export function Settings() {
       </div>
 
       <div className="spacer" />
-      <div className="ghost-chat-note">NIGHTFALL MAFIA · v1.3.1</div>
+      <div className="ghost-chat-note">NIGHTFALL MAFIA · v1.4.0</div>
     </div>
   );
 }

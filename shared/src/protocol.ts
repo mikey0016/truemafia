@@ -38,6 +38,8 @@ export interface VotePayload {
 
 export interface ActionPayload {
   targetId: number;
+  /** detektiv tanlovi: tekshirish yoki (bir martalik) otish */
+  mode?: 'kill' | 'investigate';
 }
 
 export interface ChatSendPayload {

@@ -37,7 +37,7 @@ export function createApiRouter(deps: {
   router.get('/profile/:userId', (req, res) => {
     const uid = parseInt(req.params.userId, 10);
     if (!Number.isFinite(uid)) {
-      res.status(400).json({ error: 'Noto‘g‘ri id' });
+      res.status(400).json({ error: 'Notoâ€™gâ€™ri id' });
       return;
     }
     void deps.users.getProfile(uid).then((p) => {
@@ -90,7 +90,7 @@ export function createApiRouter(deps: {
     const itemId = String(req.body?.item_id ?? '');
     const item = SHOP_ITEMS.find((i) => i.id === itemId);
     if (!item) {
-      res.status(400).json({ error: 'Noma’lum narsa' });
+      res.status(400).json({ error: 'Nomaâ€™lum narsa' });
       return;
     }
     void deps.users.buyItem(uid, item.id, item.price).then((r) => {
@@ -140,7 +140,7 @@ export function createApiRouter(deps: {
   router.post('/admin/ban/:userId', adminMiddleware, (req, res) => {
     const uid = parseInt(req.params.userId, 10);
     if (!Number.isFinite(uid)) {
-      res.status(400).json({ error: 'Noto‘g‘ri id' });
+      res.status(400).json({ error: 'Notoâ€™gâ€™ri id' });
       return;
     }
     void deps.db.run('UPDATE users SET is_banned=1 WHERE user_id=$1', [uid]).then(() => {
@@ -151,7 +151,7 @@ export function createApiRouter(deps: {
   router.post('/admin/unban/:userId', adminMiddleware, (req, res) => {
     const uid = parseInt(req.params.userId, 10);
     if (!Number.isFinite(uid)) {
-      res.status(400).json({ error: 'Noto‘g‘ri id' });
+      res.status(400).json({ error: 'Notoâ€™gâ€™ri id' });
       return;
     }
     void deps.db.run('UPDATE users SET is_banned=0 WHERE user_id=$1', [uid]).then(() => {

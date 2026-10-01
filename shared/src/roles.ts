@@ -90,7 +90,7 @@ export const ROLES: Record<RoleId, RoleDefinition> = {
     icon: 'search',
     tagline: 'HAQIQATNI BILING',
     description: 'Ziyrak tergovchi.',
-    ability: 'Har tun bir o‘yinchini tekshiring: MAFIYA yoki MAFIYA EMAS.',
+    ability: 'Har tun bir o‘yinchini tekshiring: MAFIYA yoki MAFIYA EMAS. Bitta o‘qingiz bor — ishonchingiz komil bo‘lsa otib o‘ldirishingiz mumkin.',
     color: '#0091ff',
     nightAction: true,
     actionKind: 'investigate',
@@ -212,6 +212,8 @@ export interface GameSnapshot {
     role: RoleId | null;
     hasActed: boolean;
     investigations: { targetId: number; result: 'MAFIA' | 'NOT_MAFIA' }[];
+    /** detektivning bir martalik o‘qi qolganmi */
+    shotLeft: boolean;
   };
   players: PlayerCardView[];
   chat: ChatMessage[];
