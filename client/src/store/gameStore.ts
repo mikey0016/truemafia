@@ -11,6 +11,7 @@ import type {
 import type { AchievementDef } from '@truemafia/shared';
 import { ACHIEVEMENTS } from '@truemafia/shared';
 import { getInitData } from '../services/telegram';
+import { getGuestName } from '../services/identity';
 import { apiUrl } from '../config';
 
 /**
@@ -67,6 +68,8 @@ interface GameState {
   profile: ProfileStats | null;
   profileLoading: boolean;
   profileError: string | null;
+  /** true = backend yo'q, lokal demo profil ko'rsatilmoqda */
+  profileOffline: boolean;
   loadProfile: () => Promise<void>;
 
   // room / lobby
@@ -143,6 +146,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   profile: null,
   profileLoading: false,
   profileError: null,
+  profileOffline: false,
   loadProfile: async () => {
     set({ profileLoading: true, profileError: null });
     try {
@@ -150,12 +154,36 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (!res.ok) throw new Error(res.status === 401 ? 'Unauthorized' : `HTTP ${res.status}`);
       const json = (await res.json()) as { profile: ProfileStats | null };
       if (!json.profile) throw new Error('Empty profile');
-      set({ profile: json.profile, profileLoading: false, profileError: null });
+      set({ profile: json.profile, profileLoading: false, profileError: null, profileOffline: false });
     } catch (e) {
+      // Backend yo'q (GitHub Pages'da VITE_BACKEND_URL bo'sh) —
+      // bo'sh xato o'rniga lokal demo profil ko'rsatamiz.
+      const name = getGuestName();
       set({
         profileLoading: false,
-        profileError: e instanceof Error ? e.message : 'Network error',
+        profileError: null,
+        profileOffline: true,
+        profile: {
+          userId: 0,
+          username: name,
+          photoUrl: undefined,
+          level: 1,
+          xp: 0,
+          xpToNext: 100,
+          games: 0,
+          wins: 0,
+          mafiaWins: 0,
+          townWins: 0,
+          independentWins: 0,
+          winRate: 0,
+          bestStreak: 0,
+          currentStreak: 0,
+          reputation: 0,
+          coins: 0,
+          achievements: [],
+        },
       });
+      void e;
     }
   },
 

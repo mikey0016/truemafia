@@ -73,7 +73,7 @@ export function Join() {
         </div>
         {openRoomsLoading && openRooms.length === 0 && <div className="dim">Loading rooms…</div>}
         {openRoomsError && openRooms.length === 0 && !openRoomsLoading && (
-          <div className="dim">Rooms unavailable ({openRoomsError})</div>
+          <div className="dim">Backend ulanmagan — xonalar ko'rinmayabdi ({openRoomsError})</div>
         )}
         {!openRoomsLoading && !openRoomsError && openRooms.length === 0 && (
           <div className="dim">No open rooms — create one!</div>
