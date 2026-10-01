@@ -55,6 +55,8 @@ export class GameEngine {
   private snapshotTimer: NodeJS.Timeout | null = null;
   /** Karta tanlash rejimi: userId -> tanlangan rol (lobby, ochiq draft) */
   private rolePicks = new Map<number, RoleId>();
+  /** Ketma-ket "o'lik" raundlar (na o'lim, na ovoz, na tungi harakat) — stall himoyasi */
+  private stallRounds = 0;
 
   constructor(
     public room: RoomLike,
@@ -399,6 +401,10 @@ export class GameEngine {
         if (this.settings.revealRolesOnDeath) this.reveals.set(p.userId, p.role);
       }
     }
+    if (deaths.length > 0) this.stallRounds = 0;
+
+    // O'yin shu tunda hal bo'lishi mumkin (masalan 1v1) — keraksiz kun o'tkazmaymiz
+    if (this.checkWin()) return;
 
     this.phase = 'NIGHT_RESULT';
     this.phaseEndsAt = Date.now() + this.resultSeconds * 1000;
@@ -530,6 +536,22 @@ export class GameEngine {
       this.pushSystem('day', '⚖️ The town could not decide. No one was eliminated.');
     }
 
+    // Stall himoyasi: 3 raund ketma-ket hech kim ovoz bermasa va tunda
+    // hech kim harakat qilmasa (AFK) — o'yin abadiy aylanmasligi uchun yakunlaymiz
+    if (eliminatedId === null && this.nightActions.size === 0 && this.votes.size === 0) {
+      this.stallRounds++;
+    } else {
+      this.stallRounds = 0;
+    }
+    if (this.stallRounds >= 3) {
+      const mafiaLeft = this.alivePlayers().some((p) => isMafia(p.role));
+      this.finish(
+        [mafiaLeft ? 'MAFIA' : 'TOWN'],
+        'Stalemate — three rounds passed with no votes and no night actions.',
+      );
+      return;
+    }
+
     this.phase = 'VOTE_RESULT';
     this.phaseEndsAt = Date.now() + this.resultSeconds * 1000;
     this.hooks.onPhaseChanged();
@@ -554,6 +576,10 @@ export class GameEngine {
     if (mafiaAlive === 0 && skAlive === 0 && indAlive === 0) {
       winner = 'TOWN';
       reason = 'All threats eliminated.';
+    } else if (mafiaAlive === 1 && townAlive === 1 && skAlive === 0 && indAlive === 0) {
+      // 1v1: mafiya tunda baribir o'ldiradi — o'yinni cho'zmaymiz
+      winner = 'MAFIA';
+      reason = 'One-on-one — the Mafia strikes at night.';
     } else if (mafiaAlive > 0 && mafiaAlive >= alive.length - mafiaAlive - skAlive - indAlive) {
       winner = 'MAFIA';
       reason = 'The Mafia outnumbers the town.';
