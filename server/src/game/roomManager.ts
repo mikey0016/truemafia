@@ -118,6 +118,8 @@ export class RoomManager {
     if (set) {
       set.delete(socketId);
       if (set.size === 0) {
+        // Bo'sh to'plam map'da qolsa everyoneGone hech qachon ishlamaydi (ghost xona)
+        room.sockets.delete(userId);
         room.engine.setConnected(userId, false);
       }
     }
@@ -163,8 +165,29 @@ export class RoomManager {
     }
   }
 
-  startCleanupLoop(): void {
-    if (this.cleanupTimer) return;
+  /**
+   * Tashlab ketilgan xonani DARHOL yopish (leave/disconnect'dan keyin chaqiriladi).
+   * O'yin o'rtasida aloqasi uzilganlar uchun 60s lik loop reconnect imkoni beradi —
+   * bu yerda faqat rostdan bo'sh xonalar yopiladi. Yopilgan bo'lsa true.
+   */
+  sweepRoom(code: string): boolean {
+    const room = this.rooms.get(code.toUpperCase());
+    if (!room) return false;
+    const e = room.engine;
+    const humans = e.players.filter((p) => !p.isBot);
+    const connected = humans.filter((p) => room.sockets.has(p.userId));
+    const abandoned =
+      humans.length === 0 || // hech kim qolmagan (faqat botlar bo'lishi mumkin)
+      ((e.phase === 'LOBBY' || e.isOver) && connected.length === 0); // lobby tashlandi / o'yin tugagan
+    if (!abandoned) return false;
+    void this.closeRoom(
+      code,
+      humans.length > 0 ? 'Room closed — everyone left' : undefined,
+    );
+    return true;
+  }
+
+  startCleanupLoop(): void {    if (this.cleanupTimer) return;
     this.cleanupTimer = setInterval(() => {
       const now = Date.now();
       for (const [code, room] of this.rooms) {

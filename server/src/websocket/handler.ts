@@ -261,7 +261,12 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
         room.engine.kickPlayer(me().userId);
         deps.roomManager.detachSocket(code!, me().userId, socket.id);
         socket.leave(`room:${code}`);
-        if (room.engine.phase === 'LOBBY') emitRoomState(room);
+        // Oxirgi odam chiqsa xona darhol yopiladi (60s kutilmaydi)
+        const closed = deps.roomManager.sweepRoom(code!);
+        if (!closed) {
+          const still = deps.roomManager.get(code!);
+          if (still && still.engine.phase === 'LOBBY') emitRoomState(still);
+        }
       }
       socket.data.roomCode = undefined;
       ack?.({ ok: true });
@@ -375,7 +380,11 @@ export function createSocketServer(httpServer: HttpServer, deps: Deps): IOServer
 
     socket.on('disconnect', () => {
       const code = me().roomCode;
-      if (code) deps.roomManager.detachSocket(code, me().userId, socket.id);
+      if (code) {
+        deps.roomManager.detachSocket(code, me().userId, socket.id);
+        // Ilovani yopib chiqqanlar (leave bosmasdan) — bo'sh xona darhol yopiladi
+        deps.roomManager.sweepRoom(code);
+      }
     });
   });
 
