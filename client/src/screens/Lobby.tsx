@@ -15,16 +15,15 @@ export function Lobby() {
   const { roomCode, roomPlayers, roomSettings, rolePicks, myPick, isHost, ready, pickRole } = useGameStore();
   const shopItems = useGameStore((s) => s.shopItems);
   const loadShop = useGameStore((s) => s.loadShop);
-  const navigate = useGameStore((s) => s.navigate);
-
-  useEffect(() => {
-    if (roomSettings?.roleDraft) void loadShop();
-  }, [loadShop, roomSettings?.roleDraft]);
   const pushToast = useGameStore((s) => s.pushToast);
   const navigate = useGameStore((s) => s.navigate);
   const [copied, setCopied] = useState(false);
   const [addingBots, setAddingBots] = useState(false);
   const isDev = import.meta.env.DEV;
+
+  useEffect(() => {
+    if (roomSettings?.roleDraft) void loadShop();
+  }, [loadShop, roomSettings?.roleDraft]);
 
   const count = roomPlayers.length;
   const target = roomSettings?.playerCount ?? MIN_PLAYERS;
