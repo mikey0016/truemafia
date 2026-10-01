@@ -79,12 +79,14 @@ function withCacheBust(url: string): string {
 }
 
 export function resolveWebAppUrl(): string {
+  // URL qanday bo'lsa shunday ishlatiladi — webview cache uchun /play va /start
+  // har safar ?v= param qo'shib yuboradi (withCacheBust).
   const url = (
     process.env.WEBAPP_URL ||
     process.env.PUBLIC_URL ||
-    'https://mikey0016.github.io/truemafia/'
+    'https://truemafia-gwgv.onrender.com'
   ).trim().replace(/\/+$/, '');
-  return url || 'https://mikey0016.github.io/truemafia/';
+  return url || 'https://truemafia-gwgv.onrender.com';
 }
 
 function commandOf(text: string | undefined): string {
